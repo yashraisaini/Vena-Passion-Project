@@ -1,0 +1,35 @@
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.4rem clamp(2rem, 6vw, 5rem);
+  transition: background 0.5s, backdrop-filter 0.5s, border-color 0.5s;
+  border-bottom: 1px solid transparent;
+}
+.nav.filled {
+  background: rgba(253, 248, 246, 0.88);
+  backdrop-filter: blur(20px);
+  border-bottom-color: var(--border);
+}
+.brand {
+  font-family: var(--ff); font-weight: 300; font-size: 1.5rem;
+  letter-spacing: 0.22em; color: var(--text);
+  display: flex; align-items: center; gap: 0.6rem;
+  text-decoration: none;
+}
+.pulse {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  animation: pulse 3s ease-in-out infinite;
+  display: inline-block;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 8px var(--accent); }
+  50% { box-shadow: 0 0 20px var(--accent), 0 0 40px rgba(200,16,46,0.4); }
+}
+.links { display: flex; gap: 2.5rem; align-items: center; }
+.link {
+  font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--dim); text-decoration: none; transition: color 0.25s;
+}
+.link:hover { color: var(--text); }
+.cta { color: var(--accent) !important; }

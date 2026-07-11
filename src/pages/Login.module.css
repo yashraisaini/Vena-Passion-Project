@@ -1,0 +1,37 @@
+.page {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  padding: 2rem; background: var(--bg);
+  background-image: radial-gradient(ellipse 60% 60% at 50% 40%, rgba(200,16,46,0.06) 0%, transparent 60%);
+}
+.box {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 4px; padding: 3.5rem; max-width: 28rem; width: 100%;
+  text-align: center; position: relative; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(36,20,18,0.08);
+}
+.topBar {
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--gold), var(--accent));
+}
+.icon {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: rgba(200,16,46,0.07); border: 1px solid rgba(200,16,46,0.18);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.5rem; color: var(--accent);
+}
+.icon svg { width: 34px; height: 34px; }
+.brand {
+  font-family: var(--ff); font-size: 0.9rem; font-weight: 300;
+  letter-spacing: 0.35em; text-transform: uppercase; color: var(--dim); margin-bottom: 0.75rem;
+}
+.title { font-family: var(--ff); font-size: 2rem; font-weight: 300; color: var(--text); margin-bottom: 0.75rem; }
+.sub { font-size: 0.9rem; color: var(--dim); line-height: 1.75; margin-bottom: 2.2rem; }
+.googleBtn {
+  display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+  width: 100%; padding: 0.95rem 1.5rem;
+  background: #fff; color: #1a1a2e; border: 1px solid var(--border); border-radius: 3px;
+  font-family: var(--fb); font-size: 0.88rem; font-weight: 600;
+  cursor: pointer; transition: all 0.25s; margin-bottom: 1.4rem;
+}
+.googleBtn:hover { background: #f7ece9; box-shadow: 0 8px 28px rgba(36,20,18,0.12); transform: translateY(-1px); }
+.note { font-size: 0.73rem; color: var(--dimmer); line-height: 1.65; }
