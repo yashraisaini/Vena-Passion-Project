@@ -1,6 +1,7 @@
 # VENA — Smart Infusion Companion
 
 A React + Vite + Supabase web app for hemophilia and von Willebrand disease medication tracking.
+https://vena-passion-project.vercel.app
 
 ## Stack
 - **Frontend**: React 18, Vite, CSS Modules, GSAP (scroll animations)
