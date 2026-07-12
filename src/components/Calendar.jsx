@@ -1,34 +1,17 @@
 import { useState } from 'react'
 import { getFactorStatus } from '../data/medications'
+import { getDoseDays } from '../lib/schedule'
+import { REASON_LABELS, REASON_COLORS } from '../lib/reasons'
 import styles from './Calendar.module.css'
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const EV_COLORS = ['125,211,252','201,169,110','167,139,250','74,222,128','244,63,94','251,146,60']
+const NEUTRAL_COLOR = '150,150,150'
 const pad = n => n < 10 ? `0${n}` : `${n}`
 
 function getMedColor(myMeds, name) {
   const i = myMeds.findIndex(m => m.name === name)
-  return EV_COLORS[i % EV_COLORS.length]
-}
-
-function getDoseDays(med, yr, mo) {
-  if (!med.startDate) return []
-  const f = med.frequency.toLowerCase()
-  const dim = new Date(yr, mo + 1, 0).getDate()
-  if (f.includes('one-time') || f.includes('single')) {
-    const sd = new Date(med.startDate)
-    return (sd.getFullYear() === yr && sd.getMonth() === mo) ? [sd.getDate()] : []
-  }
-  const interval = med.customInterval || Math.round((med.intervalHrs || 72) / 24)
-  const days = [], mStart = new Date(yr, mo, 1), mEnd = new Date(yr, mo + 1, 0)
-  let cur = new Date(new Date(med.startDate).setHours(0,0,0,0))
-  if (cur > mEnd) return []
-  while (cur < mStart) cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + interval)
-  while (cur <= mEnd) {
-    if (cur >= mStart) days.push(cur.getDate())
-    cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + interval)
-  }
-  return days
+  return i === -1 ? NEUTRAL_COLOR : EV_COLORS[i % EV_COLORS.length]
 }
 
 function nowICS() {
@@ -36,7 +19,7 @@ function nowICS() {
   return `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`
 }
 
-export default function Calendar({ myMeds, showToast }) {
+export default function Calendar({ myMeds, doseLogs = [], showToast }) {
   const now = new Date()
   const [yr,  setYr]  = useState(now.getFullYear())
   const [mo,  setMo]  = useState(now.getMonth())
@@ -61,8 +44,29 @@ export default function Calendar({ myMeds, showToast }) {
       const fd  = overrides[key] !== undefined ? overrides[key] : d
       if (fd < 1 || fd > dim) return
       sched[fd] = sched[fd] || []
-      sched[fd].push({ name: med.name, origDay: d, col: getMedColor(myMeds, med.name), med })
+      sched[fd].push({ name: med.name, medId: med.id, origDay: d, col: getMedColor(myMeds, med.name), med })
     })
+  })
+
+  // Cross-reference logged doses against the schedule: a log matching a scheduled
+  // med+day marks that entry "confirmed"; anything left over is an ad-hoc extra dose.
+  const monthLogs = doseLogs.filter(l => {
+    const d = new Date(l.taken_at)
+    return d.getFullYear() === yr && d.getMonth() === mo
+  })
+  const usedLogIds = new Set()
+  Object.values(sched).forEach(evs => {
+    evs.forEach(ev => {
+      const match = monthLogs.find(l => !usedLogIds.has(l.id) && l.med_id === ev.medId && new Date(l.taken_at).getDate() === ev.origDay)
+      if (match) { ev.confirmed = true; ev.reasonColor = REASON_COLORS[match.reason] || NEUTRAL_COLOR; usedLogIds.add(match.id) }
+    })
+  })
+  const extra = {}
+  monthLogs.forEach(l => {
+    if (usedLogIds.has(l.id)) return
+    const d = new Date(l.taken_at).getDate()
+    extra[d] = extra[d] || []
+    extra[d].push(l)
   })
 
   function handleDrop(e, day) {
@@ -129,6 +133,12 @@ export default function Calendar({ myMeds, showToast }) {
         </div>
       </div>
       <p className={styles.calHint}>Drag any dose to reschedule it. Colour strip shows estimated factor protection.</p>
+      <p className={styles.calLegend}>
+        <span className={styles.legendSwatch}/> Outline = expected (coloured by medication)
+        <span className={`${styles.legendSwatch} ${styles.legendConfirmed}`}/> Filled = confirmed taken
+        <span className={`${styles.legendSwatch} ${styles.legendExtra}`}/> Dashed = logged outside schedule
+        <span>— filled &amp; dashed doses are coloured by reason (see Dose History for the colour key)</span>
+      </p>
 
       <div className={styles.calWrap}>
         {/* Day labels */}
@@ -161,17 +171,33 @@ export default function Calendar({ myMeds, showToast }) {
                   <div
                     key={ei}
                     className={styles.ev}
-                    style={{ background:`rgba(${ev.col},0.12)`, color:`rgba(${ev.col},1)`, borderColor:`rgba(${ev.col},0.6)` }}
-                    draggable
-                    title="Drag to reschedule"
-                    onDragStart={e => {
+                    style={ev.confirmed
+                      ? { background:`rgba(${ev.reasonColor},1)`, color:'#fff', borderColor:`rgba(${ev.reasonColor},1)` }
+                      : { background:`rgba(${ev.col},0.12)`, color:`rgba(${ev.col},1)`, borderColor:`rgba(${ev.col},0.6)` }
+                    }
+                    draggable={!ev.confirmed}
+                    title={ev.confirmed ? 'Confirmed taken' : 'Drag to reschedule'}
+                    onDragStart={ev.confirmed ? undefined : e => {
                       e.dataTransfer.setData('text/plain', JSON.stringify({ name: ev.name, origDay: ev.origDay }))
                       e.dataTransfer.effectAllowed = 'move'
                     }}
                   >
-                    {ev.name}
+                    {ev.confirmed ? '✓ ' : ''}{ev.name}
                   </div>
                 ))}
+                {(extra[d] || []).map((log, li) => {
+                  const col = REASON_COLORS[log.reason] || NEUTRAL_COLOR
+                  return (
+                    <div
+                      key={`x${li}`}
+                      className={`${styles.ev} ${styles.evExtra}`}
+                      style={{ color:`rgba(${col},1)`, borderColor:`rgba(${col},0.7)` }}
+                      title={`${REASON_LABELS[log.reason] || 'Logged'} — ${log.med_name}${log.note ? ` — ${log.note}` : ''}`}
+                    >
+                      + {log.med_name}
+                    </div>
+                  )
+                })}
                 {evs.length > 0 && (() => {
                   let minPct = 100
                   evs.forEach(ev => {

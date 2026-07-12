@@ -1,25 +1,61 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Library from '../components/Library'
 import Calendar from '../components/Calendar'
 import StartDateModal from '../components/StartDateModal'
-import { getFactorStatus, catMeta } from '../data/medications'
+import LogDoseModal from '../components/LogDoseModal'
+import { getFactorStatus, catMeta, medications } from '../data/medications'
+import { isDoseDueToday, toLocalISODate, parseLocalDate } from '../lib/schedule'
+import { REASON_LABELS } from '../lib/reasons'
+import * as db from '../lib/db'
 import styles from './Dashboard.module.css'
-
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
 export default function Dashboard() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
 
   const [myMeds,    setMyMeds]    = useState([])
+  const [doseLogs,  setDoseLogs]  = useState([])
+  const [loading,   setLoading]   = useState(true)
   const [pendingMed,setPending]   = useState(null)  // med waiting for start date
-  const [tab,       setTab]       = useState('meds') // meds | library | calendar
+  const [logModal,  setLogModal]  = useState(null)  // { med?, defaultReason? } while a LogDoseModal is open
+  const [tab,       setTab]       = useState('meds') // meds | library | calendar | history
   const [toast,     setToast]     = useState('')
   const [toastShow, setToastShow] = useState(false)
 
+  const writeTimers = useRef({})
+
   useEffect(() => { if (!user) navigate('/login') }, [user, navigate])
+
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    setLoading(true)
+    Promise.all([db.listUserMedications(user.id), db.listDoseLogs(user.id)])
+      .then(([rows, logs]) => {
+        if (cancelled) return
+        const hydrated = rows
+          .map(row => {
+            const catalog = medications.find(m => m.id === row.med_id)
+            if (!catalog) return null
+            return {
+              ...catalog,
+              startDate:       parseLocalDate(row.start_date),
+              customInterval:  row.interval_days,
+              customFreqLabel: row.freq_label,
+              unitSize:        row.unit_size,
+              stockCount:      row.stock_count,
+            }
+          })
+          .filter(Boolean)
+        setMyMeds(hydrated)
+        setDoseLogs(logs)
+      })
+      .catch(() => showToast('Failed to load your data'))
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [user])
 
   function showToast(msg) {
     setToast(msg); setToastShow(true)
@@ -27,30 +63,111 @@ export default function Dashboard() {
   }
 
   function handleAdd(med) {
-    if (myMeds.some(m => m.name === med.name)) { showToast(`${med.name} already added`); return }
+    if (myMeds.some(m => m.id === med.id)) { showToast(`${med.name} already added`); return }
     setPending(med)
   }
 
-  function confirmAdd(med) {
-    setMyMeds(prev => [...prev, med])
-    setPending(null)
-    showToast(`${med.name} added — every ${med.customInterval} days`)
+  async function confirmAdd(med) {
+    try {
+      await db.upsertUserMedication(user.id, {
+        med_id:        med.id,
+        med_name:      med.name,
+        start_date:    toLocalISODate(med.startDate),
+        interval_days: med.customInterval,
+        freq_label:    med.customFreqLabel,
+      })
+      setMyMeds(prev => [...prev, med])
+      setPending(null)
+      showToast(`${med.name} added — every ${med.customInterval} days`)
+    } catch {
+      showToast('Failed to save medication — try again')
+    }
   }
 
-  function removeMed(name) {
-    setMyMeds(prev => prev.filter(m => m.name !== name))
-    showToast(`${name} removed`)
+  async function removeMed(id, name) {
+    try {
+      await db.deleteUserMedication(user.id, id)
+      setMyMeds(prev => prev.filter(m => m.id !== id))
+      showToast(`${name} removed`)
+    } catch {
+      showToast('Failed to remove medication — try again')
+    }
   }
 
-  function updateInterval(name, delta) {
-    setMyMeds(prev => prev.map(m =>
-      m.name === name
-        ? { ...m, customInterval: Math.min(365, Math.max(1, (m.customInterval || 3) + delta)), customFreqLabel: null }
-        : m
-    ))
+  function schedulePersist(med, errorMsg) {
+    clearTimeout(writeTimers.current[med.id])
+    writeTimers.current[med.id] = setTimeout(() => {
+      db.upsertUserMedication(user.id, {
+        med_id:        med.id,
+        med_name:      med.name,
+        start_date:    toLocalISODate(med.startDate),
+        interval_days: med.customInterval,
+        freq_label:    med.customFreqLabel,
+        unit_size:     med.unitSize,
+        stock_count:   med.stockCount,
+      }).catch(() => showToast(errorMsg))
+    }, 600)
+  }
+
+  function updateInterval(id, delta) {
+    setMyMeds(prev => {
+      const next = prev.map(m =>
+        m.id === id
+          ? { ...m, customInterval: Math.min(365, Math.max(1, (m.customInterval || 3) + delta)), customFreqLabel: null }
+          : m
+      )
+      const updated = next.find(m => m.id === id)
+      if (updated) schedulePersist(updated, 'Failed to save interval change')
+      return next
+    })
+  }
+
+  function updateStockField(id, field, value) {
+    const num = value === '' ? null : Math.max(0, Number(value))
+    setMyMeds(prev => {
+      const next = prev.map(m => m.id === id ? { ...m, [field]: num } : m)
+      const updated = next.find(m => m.id === id)
+      if (updated) schedulePersist(updated, 'Failed to save stock change')
+      return next
+    })
+  }
+
+  async function confirmLog(entry) {
+    try {
+      const saved = await db.insertDoseLog(user.id, entry)
+      setDoseLogs(prev => [...prev, saved].sort((a, b) => new Date(b.taken_at) - new Date(a.taken_at)))
+      setLogModal(null)
+      showToast(`${entry.med_name} dose logged`)
+
+      if (entry.products_used) {
+        setMyMeds(prev => {
+          const next = prev.map(m =>
+            m.id === entry.med_id && m.stockCount != null
+              ? { ...m, stockCount: Math.max(0, m.stockCount - entry.products_used) }
+              : m
+          )
+          const updated = next.find(m => m.id === entry.med_id)
+          if (updated && updated.stockCount != null) schedulePersist(updated, 'Failed to update stock count')
+          return next
+        })
+      }
+    } catch {
+      showToast('Failed to log dose — try again')
+    }
+  }
+
+  async function removeDoseLog(id) {
+    try {
+      await db.deleteDoseLog(user.id, id)
+      setDoseLogs(prev => prev.filter(l => l.id !== id))
+      showToast('Dose log removed')
+    } catch {
+      showToast('Failed to remove dose log — try again')
+    }
   }
 
   const today = new Date(); today.setHours(0, 0, 0, 0)
+  const dueToday = myMeds.filter(m => isDoseDueToday(m))
 
   return (
     <div className={styles.page}>
@@ -71,9 +188,29 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Needle day banner */}
+      {dueToday.length > 0 && (
+        <div className={styles.needleBanner}>
+          <div className={styles.needleBannerText}>
+            <strong>Today is a needle day</strong> for {dueToday.map(m => m.name).join(', ')}.
+          </div>
+          <div className={styles.needleBannerActions}>
+            {dueToday.map(m => (
+              <button
+                key={m.id}
+                className={styles.btnGhost}
+                onClick={() => setLogModal({ med: m, defaultReason: 'prophylaxis' })}
+              >
+                Log {m.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className={styles.tabs}>
-        {[['meds','My Medications'],['library','Browse Treatments'],['calendar','Calendar']].map(([k,l]) => (
+        {[['meds','My Medications'],['library','Browse Treatments'],['calendar','Calendar'],['history','Dose History']].map(([k,l]) => (
           <button key={k} className={`${styles.tab} ${tab===k?styles.tabActive:''}`} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
@@ -85,9 +222,14 @@ export default function Dashboard() {
           <div>
             <div className={styles.tabHeader}>
               <h2 className={styles.tabTitle}>My Medications</h2>
-              <button className={styles.btnGhost} onClick={() => setTab('library')}>Browse treatments →</button>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                {myMeds.length > 0 && (
+                  <button className={styles.btnGhost} onClick={() => setLogModal({})}>+ Log a dose</button>
+                )}
+                <button className={styles.btnGhost} onClick={() => setTab('library')}>Browse treatments →</button>
+              </div>
             </div>
-            {myMeds.length === 0 ? (
+            {!loading && myMeds.length === 0 ? (
               <div className={styles.empty}>
                 <p>No medications added yet.</p>
                 <p>Go to <button className={styles.inlineLink} onClick={() => setTab('library')}>Browse Treatments</button> and click + to add.</p>
@@ -98,17 +240,26 @@ export default function Dashboard() {
                   const m = catMeta[med.category]
                   const interval = med.customInterval || Math.round((med.intervalHrs || 72) / 24)
                   const sd = med.startDate ? med.startDate.toLocaleDateString('en-CA', { month:'short', day:'numeric', year:'numeric' }) : '—'
-                  const diff = med.startDate ? Math.floor((today - new Date(med.startDate).setHours(0,0,0,0)) / 86400000) : null
-                  const daysSinceLast = diff != null ? diff % interval : null
+
+                  const lastLog = doseLogs.find(l => l.med_id === med.id)
+                  let daysSinceLast = null
+                  if (lastLog) {
+                    const takenDay = new Date(lastLog.taken_at); takenDay.setHours(0, 0, 0, 0)
+                    daysSinceLast = Math.max(0, Math.floor((today - takenDay) / 86400000))
+                  } else if (med.startDate) {
+                    const startDay = new Date(med.startDate); startDay.setHours(0, 0, 0, 0)
+                    const diff = Math.max(0, Math.floor((today - startDay) / 86400000))
+                    daysSinceLast = diff % interval
+                  }
                   const status = daysSinceLast != null ? getFactorStatus(med, daysSinceLast) : null
                   const riskLabels = {
-                    safe:    'Well protected — routine activity OK',
-                    caution: 'Mild range — limit high-risk activity',
-                    risk:    'Low — consider re-dosing or contacting your HTC',
+                    safe:    'Well protected — safe for sports & activity',
+                    caution: 'Mild range — light activity only',
+                    risk:    'Low protection — rest, avoid activity',
                   }
                   return (
                     <div key={med.id} className={styles.medCard}>
-                      <button className={styles.removeBtn} onClick={() => removeMed(med.name)} aria-label={`Remove ${med.name}`}>✕</button>
+                      <button className={styles.removeBtn} onClick={() => removeMed(med.id, med.name)} aria-label={`Remove ${med.name}`}>✕</button>
                       <div className={styles.medName}>{med.name}</div>
                       <div className={styles.medGeneric}>{med.generic}</div>
                       <div className={styles.chips}>
@@ -120,12 +271,36 @@ export default function Dashboard() {
                       <div className={styles.freqRow}>
                         <span className={styles.freqLabel}>Every</span>
                         <div className={styles.stepper}>
-                          <button className={styles.stepBtn} onClick={() => updateInterval(med.name, -1)}>−</button>
+                          <button className={styles.stepBtn} onClick={() => updateInterval(med.id, -1)}>−</button>
                           <span className={styles.stepVal}>{interval}</span>
-                          <button className={styles.stepBtn} onClick={() => updateInterval(med.name, +1)}>+</button>
+                          <button className={styles.stepBtn} onClick={() => updateInterval(med.id, +1)}>+</button>
                         </div>
                         <span className={styles.freqUnit}>days</span>
                       </div>
+                      <div className={styles.stockRow}>
+                        <div className={styles.stockField}>
+                          <label>Units/product</label>
+                          <input
+                            type="number" min="0" placeholder="e.g. 1000"
+                            value={med.unitSize ?? ''}
+                            onChange={e => updateStockField(med.id, 'unitSize', e.target.value)}
+                          />
+                        </div>
+                        <div className={styles.stockField}>
+                          <label>Products in stock</label>
+                          <input
+                            type="number" min="0" placeholder="Not tracked"
+                            value={med.stockCount ?? ''}
+                            onChange={e => updateStockField(med.id, 'stockCount', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      {med.stockCount != null && (
+                        <p className={`${styles.stockNote} ${med.stockCount <= 2 ? styles.stockLow : ''}`}>
+                          {med.stockCount} product{med.stockCount === 1 ? '' : 's'} remaining
+                          {med.unitSize ? ` (${med.unitSize} units each)` : ''}
+                        </p>
+                      )}
                       {status && (
                         <div className={styles.gauge}>
                           <div className={styles.gaugeLabel}>
@@ -141,6 +316,13 @@ export default function Dashboard() {
                           </div>
                         </div>
                       )}
+                      <button
+                        className={styles.btnGhost}
+                        style={{ marginTop: '0.9rem', width: '100%' }}
+                        onClick={() => setLogModal({ med })}
+                      >
+                        Log a dose
+                      </button>
                     </div>
                   )
                 })}
@@ -161,7 +343,42 @@ export default function Dashboard() {
 
         {/* ── CALENDAR TAB ── */}
         {tab === 'calendar' && (
-          <Calendar myMeds={myMeds} showToast={showToast} />
+          <Calendar myMeds={myMeds} doseLogs={doseLogs} showToast={showToast} />
+        )}
+
+        {/* ── HISTORY TAB ── */}
+        {tab === 'history' && (
+          <div>
+            <div className={styles.tabHeader}>
+              <h2 className={styles.tabTitle}>Dose History</h2>
+            </div>
+            {doseLogs.length === 0 ? (
+              <div className={styles.empty}>
+                <p>No doses logged yet.</p>
+              </div>
+            ) : (
+              <div className={styles.historyList}>
+                {doseLogs.map(log => (
+                  <div key={log.id} className={styles.historyRow}>
+                    <div className={styles.historyDate}>
+                      {new Date(log.taken_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      <br/>
+                      {new Date(log.taken_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                    </div>
+                    <div className={styles.historyMain}>
+                      <div className={styles.historyMed}>
+                        {log.med_name}{log.dosage ? ` — ${log.dosage}` : ''}
+                        {log.products_used ? ` (${log.products_used} product${log.products_used === 1 ? '' : 's'})` : ''}
+                      </div>
+                      {log.note && <div className={styles.historyNote}>{log.note}</div>}
+                    </div>
+                    <span className={`${styles.reasonBadge} ${styles[`reason_${log.reason}`]}`}>{REASON_LABELS[log.reason]}</span>
+                    <button className={styles.historyRemoveBtn} onClick={() => removeDoseLog(log.id)} aria-label="Remove this log">✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
       </div>
@@ -172,6 +389,17 @@ export default function Dashboard() {
           med={pendingMed}
           onConfirm={confirmAdd}
           onClose={() => setPending(null)}
+        />
+      )}
+
+      {/* Log Dose Modal */}
+      {logModal && (
+        <LogDoseModal
+          med={logModal.med}
+          myMeds={myMeds}
+          defaultReason={logModal.defaultReason || 'prophylaxis'}
+          onConfirm={confirmLog}
+          onClose={() => setLogModal(null)}
         />
       )}
     </div>

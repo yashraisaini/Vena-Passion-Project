@@ -1,0 +1,29 @@
+.backdrop { position: fixed; inset: 0; z-index: 400; background: rgba(36,20,18,0.42); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; padding: 1.5rem; animation: fi 0.25s ease; }
+@keyframes fi { from { opacity: 0; } to { opacity: 1; } }
+.modal { background: #fff; border: 1px solid var(--border2); border-top: 2px solid var(--accent); border-radius: 4px; padding: 2.2rem; max-width: 28rem; width: 100%; position: relative; animation: su 0.28s cubic-bezier(0.16,1,0.3,1); box-shadow: 0 30px 80px rgba(36,20,18,0.18); max-height: 90vh; overflow-y: auto; }
+@keyframes su { from { transform: translateY(14px) scale(0.97); opacity: 0; } to { transform: none; opacity: 1; } }
+.close { position: absolute; top: 1.1rem; right: 1.1rem; background: transparent; border: 1px solid var(--border); color: var(--dim); width: 26px; height: 26px; border-radius: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; transition: all 0.2s; }
+.close:hover { border-color: var(--border2); color: var(--text); }
+.title { font-family: var(--ff); font-size: 1.5rem; font-weight: 300; color: var(--text); margin-bottom: 0.9rem; }
+.note { font-size: 0.85rem; color: var(--dim); line-height: 1.7; margin-bottom: 1rem; }
+.field { margin-bottom: 0.9rem; }
+.field label { display: block; font-family: var(--fm); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); margin-bottom: 0.4rem; }
+.field input, .field select, .field textarea { width: 100%; padding: 0.7rem 0.9rem; background: rgba(36,20,18,0.03); border: 1px solid var(--border2); border-radius: 2px; color: var(--text); font-family: var(--fb); font-size: 0.88rem; outline: none; transition: border-color 0.2s; resize: vertical; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+.field select option { background: #fff; }
+.freqRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+.reasonGroup { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.reasonBtn {
+  font-family: var(--fm); font-size: 0.62rem; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 0.5rem 0.85rem; border-radius: 2px;
+  border: 1px solid var(--border2); background: transparent;
+  color: var(--dim); cursor: pointer; transition: all 0.2s;
+}
+.reasonBtn:hover { border-color: var(--accent); color: var(--text); }
+.reasonBtn.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 700; }
+.actions { display: flex; gap: 0.7rem; margin-top: 1.4rem; }
+.btnPrimary { font-family: var(--fb); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.8rem 1.6rem; border-radius: 2px; border: none; background: var(--accent); color: var(--on-accent); cursor: pointer; transition: all 0.25s; }
+.btnPrimary:hover { background: var(--accent2); transform: translateY(-1px); }
+.btnPrimary:disabled { opacity: 0.55; cursor: default; }
+.btnGhost { font-family: var(--fb); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.8rem 1.6rem; border-radius: 2px; background: transparent; border: 1px solid var(--border); color: var(--dim); cursor: pointer; transition: all 0.25s; }
+.btnGhost:hover { border-color: var(--border2); color: var(--text); }
