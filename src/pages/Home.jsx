@@ -4,6 +4,9 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import VeinCanvas from '../components/VeinCanvas'
 import Library from '../components/Library'
+import HeroPreviewCard from '../components/HeroPreviewCard'
+import HeroPhoto from '../components/HeroPhoto'
+import { useAuth } from '../context/AuthContext'
 import styles from './Home.module.css'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -18,6 +21,7 @@ const steps = [
 ]
 
 export default function Home() {
+  const { user } = useAuth()
   const heroRef   = useRef(null)
   const eyeRef    = useRef(null)
   const wordRef   = useRef(null)
@@ -57,6 +61,11 @@ export default function Home() {
         <div className={styles.glow1} aria-hidden="true" />
         <div className={styles.glow2} aria-hidden="true" />
 
+        <div className={styles.heroVisual}>
+          <HeroPhoto />
+          <HeroPreviewCard />
+        </div>
+
         {/* Text content */}
         <div className={styles.heroContent}>
           <div className={styles.eyebrow} ref={eyeRef}>
@@ -78,8 +87,8 @@ export default function Home() {
           </p>
 
           <div className={styles.heroActions}>
-            <Link to="/login" className={`${styles.btn} ${styles.btnPrimary}`}>
-              Create account
+            <Link to={user ? '/dashboard' : '/login'} className={`${styles.btn} ${styles.btnPrimary}`}>
+              {user ? 'Go to dashboard' : 'Create account'}
             </Link>
             <a href="#guide" className={`${styles.btn} ${styles.btnOutline}`}>
               See the guide

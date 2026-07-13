@@ -1,19 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Library from '../components/Library'
 import Calendar from '../components/Calendar'
 import StartDateModal from '../components/StartDateModal'
 import LogDoseModal from '../components/LogDoseModal'
-import { getFactorStatus, catMeta, medications } from '../data/medications'
-import { isDoseDueToday, toLocalISODate, parseLocalDate } from '../lib/schedule'
+import CompleteProfileModal from '../components/CompleteProfileModal'
+import { catMeta, medications } from '../data/medications'
+import { computeMedStatus } from '../lib/factorStatus'
+import { isDoseDueToday, toLocalISODate, hydrateMedRow } from '../lib/schedule'
 import { REASON_LABELS } from '../lib/reasons'
 import * as db from '../lib/db'
 import styles from './Dashboard.module.css'
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth()
-  const navigate = useNavigate()
+  const { user, profile, refreshProfile, signOut } = useAuth()
 
   const [myMeds,    setMyMeds]    = useState([])
   const [doseLogs,  setDoseLogs]  = useState([])
@@ -26,8 +26,6 @@ export default function Dashboard() {
 
   const writeTimers = useRef({})
 
-  useEffect(() => { if (!user) navigate('/login') }, [user, navigate])
-
   useEffect(() => {
     if (!user) return
     let cancelled = false
@@ -35,20 +33,7 @@ export default function Dashboard() {
     Promise.all([db.listUserMedications(user.id), db.listDoseLogs(user.id)])
       .then(([rows, logs]) => {
         if (cancelled) return
-        const hydrated = rows
-          .map(row => {
-            const catalog = medications.find(m => m.id === row.med_id)
-            if (!catalog) return null
-            return {
-              ...catalog,
-              startDate:       parseLocalDate(row.start_date),
-              customInterval:  row.interval_days,
-              customFreqLabel: row.freq_label,
-              unitSize:        row.unit_size,
-              stockCount:      row.stock_count,
-            }
-          })
-          .filter(Boolean)
+        const hydrated = rows.map(row => hydrateMedRow(row, medications)).filter(Boolean)
         setMyMeds(hydrated)
         setDoseLogs(logs)
       })
@@ -166,8 +151,17 @@ export default function Dashboard() {
     }
   }
 
+  async function handleCompleteProfile({ first_name, last_name }) {
+    await db.updateProfileName(user.id, { first_name, last_name })
+    await refreshProfile()
+  }
+
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const dueToday = myMeds.filter(m => isDoseDueToday(m))
+
+  if (profile && (!profile.first_name || !profile.last_name)) {
+    return <CompleteProfileModal onConfirm={handleCompleteProfile} />
+  }
 
   return (
     <div className={styles.page}>
@@ -182,6 +176,7 @@ export default function Dashboard() {
             <div>
               <div className={styles.userName}>{user?.user_metadata?.full_name || 'Welcome back'}</div>
               <div className={styles.userEmail}>{user?.email}</div>
+              {profile?.patient_id && <div className={styles.patientId}>Patient ID: {profile.patient_id}</div>}
             </div>
           </div>
           <button className={styles.signOut} onClick={signOut}>Sign out</button>
@@ -241,17 +236,7 @@ export default function Dashboard() {
                   const interval = med.customInterval || Math.round((med.intervalHrs || 72) / 24)
                   const sd = med.startDate ? med.startDate.toLocaleDateString('en-CA', { month:'short', day:'numeric', year:'numeric' }) : '—'
 
-                  const lastLog = doseLogs.find(l => l.med_id === med.id)
-                  let daysSinceLast = null
-                  if (lastLog) {
-                    const takenDay = new Date(lastLog.taken_at); takenDay.setHours(0, 0, 0, 0)
-                    daysSinceLast = Math.max(0, Math.floor((today - takenDay) / 86400000))
-                  } else if (med.startDate) {
-                    const startDay = new Date(med.startDate); startDay.setHours(0, 0, 0, 0)
-                    const diff = Math.max(0, Math.floor((today - startDay) / 86400000))
-                    daysSinceLast = diff % interval
-                  }
-                  const status = daysSinceLast != null ? getFactorStatus(med, daysSinceLast) : null
+                  const status = computeMedStatus(med, doseLogs, today)
                   const riskLabels = {
                     safe:    'Well protected — safe for sports & activity',
                     caution: 'Mild range — light activity only',
@@ -370,6 +355,11 @@ export default function Dashboard() {
                         {log.med_name}{log.dosage ? ` — ${log.dosage}` : ''}
                         {log.products_used ? ` (${log.products_used} product${log.products_used === 1 ? '' : 's'})` : ''}
                       </div>
+                      {log.bleed_location && (
+                        <div className={styles.historyNote}>
+                          {log.bleed_location}{log.bleed_side && log.bleed_side !== 'N/A' ? ` (${log.bleed_side})` : ''}
+                        </div>
+                      )}
                       {log.note && <div className={styles.historyNote}>{log.note}</div>}
                     </div>
                     <span className={`${styles.reasonBadge} ${styles[`reason_${log.reason}`]}`}>{REASON_LABELS[log.reason]}</span>

@@ -5,7 +5,7 @@ import styles from './Nav.module.css'
 
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false)
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const loc = useLocation()
 
   useEffect(() => {
@@ -23,8 +23,11 @@ export default function Nav() {
       <div className={styles.links}>
         <Link to="/#guide"    className={styles.link}>Guide</Link>
         <Link to="/#library"  className={styles.link}>Treatments</Link>
+        {profile?.role === 'provider' && (
+          <Link to="/provider" className={styles.link}>Provider View</Link>
+        )}
         <Link to={user ? '/dashboard' : '/login'} className={`${styles.link} ${styles.cta}`}>
-          {user ? 'Dashboard' : 'Sign in'}
+          {user ? 'Dashboard' : 'Log in'}
         </Link>
       </div>
     </nav>

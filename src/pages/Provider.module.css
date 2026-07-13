@@ -1,0 +1,82 @@
+.page { min-height: 100vh; background: var(--bg); padding: 5.5rem clamp(1.5rem, 5vw, 4rem) 4rem; }
+
+.header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;
+  padding-bottom: 1.2rem; border-bottom: 1px solid var(--border2);
+}
+.brand { font-family: var(--fm); font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.4rem; }
+.title { font-family: var(--fb); font-size: 1.7rem; font-weight: 600; color: var(--text); }
+.headerActions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+.btnPrimary {
+  font-family: var(--fb); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em;
+  padding: 0.65rem 1.3rem; border-radius: 3px; border: none;
+  background: var(--accent); color: var(--on-accent); cursor: pointer; transition: all 0.2s;
+}
+.btnPrimary:hover:not(:disabled) { background: var(--accent2); }
+.btnPrimary:disabled { opacity: 0.5; cursor: default; }
+.btnGhost {
+  font-family: var(--fb); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.05em;
+  padding: 0.65rem 1.3rem; border-radius: 3px; border: 1px solid var(--border2);
+  background: transparent; color: var(--dim); cursor: pointer; transition: all 0.2s;
+}
+.btnGhost:hover { border-color: var(--accent); color: var(--text); }
+
+.empty { padding: 3rem 1rem; text-align: center; color: var(--dimmer); font-size: 0.9rem; }
+.emptySmall { color: var(--dimmer); font-size: 0.78rem; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); gap: 1rem; }
+
+.card {
+  background: var(--bg2); border: 1px solid var(--border2); border-radius: 4px;
+  padding: 1.3rem; display: flex; flex-direction: column; gap: 0.9rem;
+}
+.cardHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
+.patientName { font-family: var(--fb); font-weight: 600; font-size: 1.02rem; color: var(--text); }
+.patientIdCell { font-family: var(--fm); font-size: 0.72rem; color: var(--dim); margin-top: 0.15rem; }
+.removeBtn {
+  width: 26px; height: 26px; border-radius: 2px; background: transparent;
+  border: 1px solid var(--border2); color: var(--dimmer); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 0.85rem;
+  flex-shrink: 0; transition: all 0.2s;
+}
+.removeBtn:hover { background: rgba(239,68,68,0.1); color: #ef4444; border-color: rgba(239,68,68,0.3); }
+
+.confirmBar {
+  background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.22);
+  border-radius: 3px; padding: 0.8rem 0.9rem;
+}
+.confirmBar p { font-size: 0.8rem; color: var(--text); line-height: 1.6; margin-bottom: 0.7rem; }
+.confirmActions { display: flex; gap: 0.6rem; }
+
+.medList { display: flex; flex-direction: column; gap: 0.7rem; }
+.medRow {}
+.medRowTop { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.3rem; }
+.medName { font-size: 0.86rem; color: var(--text); font-weight: 500; }
+.medPct { font-family: var(--fm); font-size: 0.72rem; }
+.chartTrack { height: 5px; background: rgba(36,20,18,0.07); border-radius: 3px; overflow: hidden; }
+.chartFill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+
+.lastDose {
+  border-top: 1px solid var(--border); padding-top: 0.8rem;
+  font-size: 0.8rem; color: var(--dim); display: flex; flex-direction: column; gap: 0.25rem;
+}
+.lastDoseLabel { font-family: var(--fm); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dimmer); }
+
+.showMoreBtn {
+  font-family: var(--fm); font-size: 0.65rem; letter-spacing: 0.06em; text-transform: uppercase;
+  background: none; border: 1px solid var(--border2); border-radius: 2px; color: var(--dim);
+  padding: 0.5rem; cursor: pointer; transition: all 0.2s;
+}
+.showMoreBtn:hover { border-color: var(--accent); color: var(--accent); }
+
+.logList { display: flex; flex-direction: column; max-height: 16rem; overflow-y: auto; }
+.logRow {
+  display: flex; flex-direction: column; gap: 0.15rem;
+  padding: 0.5rem 0; border-top: 1px solid var(--border); font-size: 0.78rem;
+}
+.logRow:first-child { border-top: none; }
+.logDate { font-family: var(--fm); font-size: 0.68rem; color: var(--dimmer); }
+.logMed { color: var(--text); }
+.logReason { font-family: var(--fm); font-size: 0.64rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dim); }

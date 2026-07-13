@@ -8,6 +8,9 @@ const nowTimeStr = () => {
   return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
 }
 
+const BLEED_LOCATIONS = ['Elbow', 'Knee', 'Ankle', 'Hip', 'Shoulder', 'Wrist', 'Muscle', 'Head/CNS', 'Other']
+const BLEED_SIDES = ['Left', 'Right', 'N/A']
+
 export default function LogDoseModal({ med, myMeds = [], defaultReason = 'prophylaxis', onConfirm, onClose }) {
   const todayStr = toLocalISODate(new Date())
   const [medId,   setMedId]   = useState(med?.id || myMeds[0]?.id || '')
@@ -17,6 +20,8 @@ export default function LogDoseModal({ med, myMeds = [], defaultReason = 'prophy
   const [reason,  setReason]  = useState(defaultReason)
   const [note,    setNote]    = useState('')
   const [products,setProducts] = useState(1)
+  const [bleedLocation, setBleedLocation] = useState(BLEED_LOCATIONS[0])
+  const [bleedSide,     setBleedSide]     = useState(BLEED_SIDES[0])
 
   useEffect(() => {
     const fn = e => { if (e.key === 'Escape') onClose() }
@@ -26,6 +31,7 @@ export default function LogDoseModal({ med, myMeds = [], defaultReason = 'prophy
 
   const activeMed = med || myMeds.find(m => m.id === medId)
   const tracksStock = activeMed?.stockCount != null
+  const isBleed = reason === 'bleed' || reason === 'bleed_followup'
 
   function confirm() {
     if (!activeMed || !date || !time) return
@@ -40,6 +46,8 @@ export default function LogDoseModal({ med, myMeds = [], defaultReason = 'prophy
       reason,
       note,
       products_used: tracksStock ? Number(products) || 0 : null,
+      bleed_location: isBleed ? bleedLocation : null,
+      bleed_side: isBleed ? bleedSide : null,
     })
   }
 
@@ -108,6 +116,23 @@ export default function LogDoseModal({ med, myMeds = [], defaultReason = 'prophy
             ))}
           </div>
         </div>
+
+        {isBleed && (
+          <div className={styles.freqRow}>
+            <div className={styles.field}>
+              <label>Joint/location</label>
+              <select value={bleedLocation} onChange={e => setBleedLocation(e.target.value)}>
+                {BLEED_LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
+            <div className={styles.field}>
+              <label>Side</label>
+              <select value={bleedSide} onChange={e => setBleedSide(e.target.value)}>
+                {BLEED_SIDES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+        )}
 
         <div className={styles.field}>
           <label>Note (optional)</label>

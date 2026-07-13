@@ -22,10 +22,10 @@ export default function Login() {
           </svg>
         </div>
         <div className={styles.brand}>VENA</div>
-        <h1 className={styles.title}>Create your account</h1>
+        <h1 className={styles.title}>Sign in to Vena</h1>
         <p className={styles.sub}>
-          Sign in with Google to save your medications, track your factor levels,
-          build a personal infusion calendar, and export reminders to Google Calendar.
+          New or returning — sign in with Google to access your medications, factor levels,
+          and personal infusion calendar.
         </p>
         <button className={styles.googleBtn} onClick={signInWithGoogle}>
           <svg width="20" height="20" viewBox="0 0 24 24">
@@ -37,8 +37,7 @@ export default function Login() {
           Continue with Google
         </button>
         <p className={styles.note}>
-          Requires a Supabase project with Google OAuth enabled.<br/>
-          See README.md for setup instructions.
+          Doctor or nurse? <a href="/provider-login">Sign in here</a> instead.
         </p>
       </div>
     </div>

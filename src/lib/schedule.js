@@ -34,3 +34,19 @@ export function parseLocalDate(dateStr) {
   const [y, m, d] = dateStr.split('-').map(Number)
   return new Date(y, m - 1, d)
 }
+
+// Merges a user_medications DB row with its static catalog entry into the
+// shape the rest of the app works with. Returns null if the catalog no
+// longer has this med_id (shouldn't normally happen).
+export function hydrateMedRow(row, catalog) {
+  const entry = catalog.find(m => m.id === row.med_id)
+  if (!entry) return null
+  return {
+    ...entry,
+    startDate:       parseLocalDate(row.start_date),
+    customInterval:  row.interval_days,
+    customFreqLabel: row.freq_label,
+    unitSize:        row.unit_size,
+    stockCount:      row.stock_count,
+  }
+}

@@ -23,6 +23,7 @@
 }
 .userName { font-family: var(--ff); font-size: 1.1rem; font-weight: 400; color: var(--text); }
 .userEmail { font-size: 0.77rem; color: var(--dim); }
+.patientId { font-family: var(--fm); font-size: 0.68rem; color: var(--dimmer); margin-top: 0.15rem; }
 .signOut {
   font-family: var(--fb); font-size: 0.72rem; font-weight: 500;
   letter-spacing: 0.08em; text-transform: uppercase;

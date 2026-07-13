@@ -1,0 +1,15 @@
+.frame {
+  background: #fff;
+  padding: 0.7rem;
+  border-radius: 6px;
+  box-shadow: 0 40px 90px rgba(36,20,18,0.2), 0 6px 20px rgba(36,20,18,0.08);
+  transform: rotate(-1.4deg);
+  width: clamp(19rem, 28vw, 24rem);
+}
+.imgWrap {
+  border-radius: 3px;
+  overflow: hidden;
+  aspect-ratio: 1024 / 1535;
+  background: #f4ece9;
+}
+.img { width: 100%; height: 100%; object-fit: contain; display: block; }

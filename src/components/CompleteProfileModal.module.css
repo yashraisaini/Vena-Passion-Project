@@ -1,0 +1,29 @@
+.backdrop {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(36,20,18,0.5); backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+}
+.modal {
+  background: #fff; border: 1px solid var(--border2); border-top: 2px solid var(--accent);
+  border-radius: 4px; padding: 2.2rem; max-width: 26rem; width: 100%;
+  box-shadow: 0 30px 80px rgba(36,20,18,0.18);
+}
+.title { font-family: var(--ff); font-size: 1.6rem; font-weight: 300; color: var(--text); margin-bottom: 0.5rem; }
+.note { font-size: 0.87rem; color: var(--dim); line-height: 1.7; margin-bottom: 1.4rem; }
+.field { margin-bottom: 0.9rem; }
+.field label { display: block; font-family: var(--fm); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); margin-bottom: 0.4rem; }
+.field input {
+  width: 100%; padding: 0.7rem 0.9rem; background: rgba(36,20,18,0.03);
+  border: 1px solid var(--border2); border-radius: 2px; color: var(--text);
+  font-family: var(--fb); font-size: 0.88rem; outline: none; transition: border-color 0.2s;
+}
+.field input:focus { border-color: var(--accent); }
+.actions { margin-top: 1.4rem; }
+.btnPrimary {
+  width: 100%; font-family: var(--fb); font-size: 0.75rem; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; padding: 0.85rem 1.6rem;
+  border-radius: 2px; border: none; background: var(--accent); color: var(--on-accent);
+  cursor: pointer; transition: all 0.25s;
+}
+.btnPrimary:hover:not(:disabled) { background: var(--accent2); }
+.btnPrimary:disabled { opacity: 0.55; cursor: default; }
