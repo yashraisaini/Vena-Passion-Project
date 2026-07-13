@@ -20,10 +20,11 @@ export default function VeinCanvas() {
         const nx = cx + Math.cos(cAngle) * segLen
         const ny = cy + Math.sin(cAngle) * segLen
         nodes.push({ x: cx, y: cy, endX: nx, endY: ny, thickness: thick })
-        if (depth > 0 && thick > 0.55 && Math.random() < 0.045) {
+        if (depth > 0 && thick > 0.55 && Math.random() < 0.05) {
           const dir = Math.random() < 0.5 ? -1 : 1
-          const branchAngle = cAngle + dir * (0.5 + Math.random() * 0.7)
-          growVein(nx, ny, branchAngle, segLen * (2.5 + Math.random() * 2.5), thick * 0.5, depth - 1)
+          const branchAngle = cAngle + dir * (0.4 + Math.random() * 0.9)
+          const branchThickRatio = 0.32 + Math.random() * 0.32
+          growVein(nx, ny, branchAngle, segLen * (2.5 + Math.random() * 3), thick * branchThickRatio, depth - 1)
         }
         cx = nx; cy = ny
         rem -= segLen
@@ -37,11 +38,13 @@ export default function VeinCanvas() {
       nodes = []; pulses = []
 
       const origins = [
-        { x: W * 0.08, y: H * 0.94, a: -1.15, len: H * 0.62, th: 3.2 },
-        { x: W * 0.30, y: H * 1.05, a: -1.55, len: H * 0.55, th: 2.8 },
-        { x: W * 0.58, y: H * 1.06, a: -1.35, len: H * 0.5,  th: 3.0 },
+        { x: W * 0.06, y: H * 0.96, a: -1.2,  len: H * 0.62, th: 3.2 },
+        { x: W * 0.26, y: H * 1.05, a: -1.55, len: H * 0.55, th: 2.8 },
+        { x: W * 0.50, y: H * 1.06, a: -1.35, len: H * 0.5,  th: 2.6 },
+        { x: W * 0.72, y: H * 1.04, a: -1.65, len: H * 0.45, th: 2.4 },
         { x: W * 0.95, y: H * 0.55, a: 2.85,  len: W * 0.32, th: 2.6 },
-        { x: W * 0.85, y: H * 0.12, a: 2.0,   len: H * 0.35, th: 2.2 },
+        { x: W * 0.85, y: H * 0.06, a: 1.55,  len: H * 0.4,  th: 2.4 },
+        { x: W * 0.15, y: H * 0.02, a: 1.35,  len: H * 0.32, th: 2.0 },
       ]
       origins.forEach(o => growVein(o.x, o.y, o.a, o.len, o.th))
     }
