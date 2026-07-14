@@ -286,6 +286,7 @@ export default function Provider() {
                               med={med}
                               doses={logs.filter(l => l.med_id === med.id)}
                               bleedEvents={bleeds}
+                              allDoses={logs}
                             />
                           ))}
                         </div>

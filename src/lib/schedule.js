@@ -32,6 +32,22 @@ export function getProjectedNextDose(med, lastDoseTakenAt) {
   return new Date(lastDoseTakenAt.getTime() + interval * 86400000)
 }
 
+// Every expected dose timestamp (from the fixed start-date grid) that falls
+// within [rangeStart, rangeEnd] -- used to plot "expected dosing" ticks on a
+// timeline chart, distinct from the rolling next-dose projection above.
+export function getExpectedDoseTimesInRange(med, rangeStart, rangeEnd) {
+  if (!med.startDate) return []
+  const interval = med.customInterval || Math.round((med.intervalHrs || 72) / 24)
+  const intervalMs = interval * 86400000
+  if (intervalMs <= 0) return []
+  const startMs = new Date(med.startDate).getTime()
+  let t = startMs + Math.max(0, Math.floor((rangeStart - startMs) / intervalMs)) * intervalMs
+  while (t < rangeStart) t += intervalMs
+  const times = []
+  while (t <= rangeEnd) { times.push(new Date(t)); t += intervalMs }
+  return times
+}
+
 const pad = n => n < 10 ? `0${n}` : `${n}`
 
 // Format/parse date-only values without going through UTC (new Date(dateString) and

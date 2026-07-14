@@ -20,6 +20,7 @@ export default function BleedReportModal({ onConfirm, onClose }) {
   const [bruising,      setBruising]      = useState(false)
   const [discoloration, setDiscoloration] = useState(false)
   const [note,          setNote]          = useState('')
+  const [error,         setError]         = useState('')
 
   useEffect(() => {
     const fn = e => { if (e.key === 'Escape') onClose() }
@@ -32,6 +33,11 @@ export default function BleedReportModal({ onConfirm, onClose }) {
     const [y, m, d]  = date.split('-').map(Number)
     const [hh, mm]   = time.split(':').map(Number)
     const occurredAt = new Date(y, m - 1, d, hh, mm)
+    if (occurredAt.getTime() > Date.now()) {
+      setError("That hasn't happened yet — pick a time that's already passed, or now.")
+      return
+    }
+    setError('')
     onConfirm({
       occurred_at: occurredAt.toISOString(),
       location, side, severity,
@@ -121,6 +127,8 @@ export default function BleedReportModal({ onConfirm, onClose }) {
             onChange={e => setNote(e.target.value)}
           />
         </div>
+
+        {error && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginBottom: '0.9rem' }}>{error}</p>}
 
         <div className={styles.actions}>
           <button className={styles.btnPrimary} onClick={confirm}>Save bleed report</button>
