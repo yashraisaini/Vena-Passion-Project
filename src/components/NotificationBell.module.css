@@ -1,0 +1,51 @@
+.wrap { position: relative; }
+.bell {
+  position: relative; background: none; border: none; font-size: 1.15rem;
+  line-height: 1; padding: 0.3rem; cursor: pointer; opacity: 0.55; filter: grayscale(1);
+  transition: opacity 0.25s, filter 0.25s;
+}
+.bell:hover { opacity: 0.85; }
+.bell.glow {
+  opacity: 1; filter: none;
+  animation: bellGlow 2s ease-in-out infinite;
+}
+@keyframes bellGlow {
+  0%, 100% { text-shadow: 0 0 6px rgba(200,16,46,0.5); }
+  50% { text-shadow: 0 0 14px rgba(200,16,46,0.9), 0 0 24px rgba(200,16,46,0.5); }
+}
+.badge {
+  position: absolute; top: 0; right: 0; min-width: 15px; height: 15px; padding: 0 3px;
+  background: var(--accent); color: var(--on-accent); border-radius: 8px;
+  font-family: var(--fm); font-size: 0.58rem; display: flex; align-items: center; justify-content: center;
+}
+
+.dropdown {
+  position: absolute; top: calc(100% + 0.8rem); right: 0; width: 320px; max-height: 380px;
+  overflow-y: auto; background: #fff; border: 1px solid var(--border2); border-radius: 4px;
+  box-shadow: 0 16px 40px rgba(36,20,18,0.22); z-index: 200;
+}
+.dropdownHead {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--border);
+  font-family: var(--fb); font-weight: 600; font-size: 0.8rem; color: var(--text);
+}
+.markAll {
+  background: none; border: none; color: var(--accent); font-size: 0.68rem;
+  letter-spacing: 0.03em; cursor: pointer; font-family: var(--fm);
+}
+.empty { padding: 1.2rem 0.9rem; font-size: 0.78rem; color: var(--dimmer); }
+.list { display: flex; flex-direction: column; }
+.row {
+  display: flex; flex-direction: column; gap: 0.15rem; text-align: left;
+  padding: 0.65rem 0.9rem; border-bottom: 1px solid var(--border);
+  border-left: 3px solid transparent; background: none; cursor: pointer;
+  font-family: var(--fb); transition: background 0.15s;
+}
+.row:last-child { border-bottom: none; }
+.row:hover { background: rgba(36,20,18,0.03); }
+.row.unread { background: rgba(200,16,46,0.04); }
+.row.bleed { border-left-color: #991b1b; }
+.row.dose { border-left-color: var(--gold); }
+.row.reminder { border-left-color: #38bdf8; }
+.rowMsg { font-size: 0.78rem; color: var(--text); }
+.rowTime { font-family: var(--fm); font-size: 0.6rem; color: var(--dimmer); }

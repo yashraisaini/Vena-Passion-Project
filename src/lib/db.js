@@ -188,3 +188,171 @@ export async function listAllBleedEventsForProviders() {
   if (error) throw error
   return data
 }
+
+// Provider-only write — only unit_size/stock_count are sent, matching the
+// DB-side trigger's intent even though the trigger is what actually enforces
+// it (see 009_provider_stock_edit_and_notifications.sql). Deliberately not a
+// reuse of upsertUserMedication, which sends every column.
+export async function updateMedicationStock(patientId, medId, { unit_size, stock_count }) {
+  const { error } = await supabase
+    .from('user_medications')
+    .update({ unit_size, stock_count, updated_at: new Date().toISOString() })
+    .eq('user_id', patientId)
+    .eq('med_id', medId)
+  if (error) throw error
+}
+
+export async function listMyNotifications(userId) {
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('recipient_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(100)
+  if (error) throw error
+  return data
+}
+
+export async function markNotificationRead(id) {
+  const { error } = await supabase.from('notifications').update({ read: true }).eq('id', id)
+  if (error) throw error
+}
+
+export async function markAllNotificationsRead(userId) {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('recipient_id', userId)
+    .eq('read', false)
+  if (error) throw error
+}
+
+export async function sendReminder(patientId, message) {
+  const { error } = await supabase
+    .from('notifications')
+    .insert({ recipient_id: patientId, type: 'reminder', message })
+  if (error) throw error
+}
+
+// ==================== Messaging ====================
+// RLS on conversations/messages/etc scopes every plain select below to
+// exactly what the caller can see (their own patient_team thread, every
+// patient_team thread if they're a provider, and any provider_dm they're a
+// participant in) — same bulk-fetch-then-filter-in-JS style as Provider.jsx.
+
+export async function listMyConversations() {
+  const { data, error } = await supabase.from('conversations').select('*')
+  if (error) throw error
+  return data
+}
+
+export async function listMyMessages(conversationId) {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return data
+}
+
+// Bulk across every accessible conversation, for the inbox list's last-message
+// preview — mirrors listAllDoseLogsForProviders' bulk-then-group approach.
+export async function listAllMyMessages() {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function listMyMessageReads(conversationId) {
+  const { data, error } = await supabase
+    .from('message_reads')
+    .select('*')
+    .eq('conversation_id', conversationId)
+  if (error) throw error
+  return data
+}
+
+export async function listAllMyMessageReads() {
+  const { data, error } = await supabase.from('message_reads').select('*')
+  if (error) throw error
+  return data
+}
+
+export async function sendMessage(conversationId, senderId, body) {
+  const { data, error } = await supabase
+    .from('messages')
+    .insert({ conversation_id: conversationId, sender_id: senderId, body })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function uploadMessageAttachment(conversationId, messageId, file) {
+  const path = `${conversationId}/${crypto.randomUUID()}-${file.name}`
+  const { error: uploadError } = await supabase.storage
+    .from('message-attachments')
+    .upload(path, file)
+  if (uploadError) throw uploadError
+
+  const { data, error } = await supabase
+    .from('message_attachments')
+    .insert({
+      message_id: messageId,
+      storage_path: path,
+      file_name: file.name,
+      mime_type: file.type || null,
+      size_bytes: file.size,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function listAttachmentsForMessages(messageIds) {
+  if (messageIds.length === 0) return []
+  const { data, error } = await supabase
+    .from('message_attachments')
+    .select('*')
+    .in('message_id', messageIds)
+  if (error) throw error
+  return data
+}
+
+export async function getAttachmentSignedUrl(storagePath) {
+  const { data, error } = await supabase.storage
+    .from('message-attachments')
+    .createSignedUrl(storagePath, 3600)
+  if (error) throw error
+  return data.signedUrl
+}
+
+export async function markConversationRead(conversationId, userId) {
+  const { error } = await supabase
+    .from('message_reads')
+    .upsert({ conversation_id: conversationId, user_id: userId }, { onConflict: 'conversation_id,user_id' })
+  if (error) throw error
+}
+
+export async function getOrCreateProviderDM(otherProviderId) {
+  const { data, error } = await supabase.rpc('get_or_create_provider_dm', { other_provider_id: otherProviderId })
+  if (error) throw error
+  return data
+}
+
+export async function countUnreadMessages() {
+  const { data, error } = await supabase.rpc('count_unread_messages')
+  if (error) throw error
+  return data
+}
+
+export async function listProvidersForDM(myId) {
+  const { data, error } = await supabase.from('profiles').select('*').eq('role', 'provider').neq('id', myId)
+  if (error) throw error
+  return data
+}

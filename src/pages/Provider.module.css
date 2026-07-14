@@ -58,6 +58,23 @@
 .chartTrack { height: 5px; background: rgba(36,20,18,0.07); border-radius: 3px; overflow: hidden; }
 .chartFill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
 
+.stockRow { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.4rem; }
+.stockField label { display: block; font-size: 0.62rem; color: var(--dimmer); margin-bottom: 0.25rem; }
+.stockField input {
+  width: 100%; padding: 0.4rem 0.6rem; background: rgba(36,20,18,0.03);
+  border: 1px solid var(--border2); border-radius: 2px; color: var(--text);
+  font-family: var(--fb); font-size: 0.76rem; outline: none; transition: border-color 0.2s;
+}
+.stockField input:focus { border-color: var(--accent); }
+
+.reminderBtn {
+  font-family: var(--fm); font-size: 0.63rem; letter-spacing: 0.04em;
+  background: none; border: 1px solid var(--border2); border-radius: 2px; color: var(--dim);
+  padding: 0.4rem 0.7rem; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+}
+.reminderBtn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.reminderBtn:disabled { opacity: 0.6; cursor: default; }
+
 .lastDose {
   border-top: 1px solid var(--border); padding-top: 0.8rem;
   font-size: 0.8rem; color: var(--dim); display: flex; flex-direction: column; gap: 0.25rem;
@@ -87,6 +104,7 @@
   padding: 0.5rem 0; border-top: 1px solid var(--border); font-size: 0.78rem;
 }
 .logRow:first-child { border-top: none; }
+.rowHighlight { background: rgba(200,16,46,0.09); border-radius: 2px; transition: background 2s ease; }
 .logDate { font-family: var(--fm); font-size: 0.68rem; color: var(--dimmer); }
 .logMed { color: var(--text); }
 .logReason { font-family: var(--fm); font-size: 0.64rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dim); }

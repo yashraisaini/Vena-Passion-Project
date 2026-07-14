@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import NotificationBell from './NotificationBell'
+import MessageIndicator from './MessageIndicator'
+import ProfileMenu from './ProfileMenu'
 import styles from './Nav.module.css'
 
 export default function Nav() {
@@ -26,9 +29,12 @@ export default function Nav() {
         {profile?.role === 'provider' && (
           <Link to="/provider" className={styles.link}>Provider View</Link>
         )}
+        {user && <MessageIndicator />}
         <Link to={user ? '/dashboard' : '/login'} className={`${styles.link} ${styles.cta}`}>
           {user ? 'Dashboard' : 'Log in'}
         </Link>
+        {user && <NotificationBell />}
+        {user && <ProfileMenu />}
       </div>
     </nav>
   )

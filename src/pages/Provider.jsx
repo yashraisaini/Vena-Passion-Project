@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { medications } from '../data/medications'
 import { hydrateMedRow } from '../lib/schedule'
@@ -18,14 +19,47 @@ const SUB_TABS = [['history', 'History'], ['bleeds', 'Bleeds'], ['pk', 'PK Chart
 
 export default function Provider() {
   const { signOut } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
   const [loading, setLoading]     = useState(true)
   const [patients, setPatients]   = useState([]) // [{ profile, meds, logs, bleeds }]
   const [expandedIds, setExpandedIds] = useState(() => new Set())
   const [subTabs, setSubTabs] = useState({}) // { [patientId]: 'history'|'bleeds'|'pk' }
   const [confirmId, setConfirmId]   = useState(null)
   const [showArchived, setShowArchived] = useState(false)
+  const [reminderSent, setReminderSent] = useState({}) // { [patientId]: true }
+  const [highlightKey, setHighlightKey] = useState(null) // 'bleed-<id>' | 'dose-<id>', from a clicked notification
+  const writeTimers = useRef({})
+  const rowRefs = useRef({})
 
   useEffect(() => { load() }, [])
+
+  // Deep-link from NotificationBell: expand the named patient's card, switch
+  // to whichever sub-tab has the event, and highlight/scroll to that exact
+  // row -- state.nonce forces this to re-run even for a repeat click.
+  useEffect(() => {
+    const st = location.state
+    if (!st?.nonce || patients.length === 0) return
+    const patient = patients.find(p => p.profile.id === st.focusPatientId)
+    if (!patient) return
+    setExpandedIds(prev => new Set(prev).add(st.focusPatientId))
+    if (st.focusBleedId) {
+      setSubTabs(prev => ({ ...prev, [st.focusPatientId]: 'bleeds' }))
+      setHighlightKey(`bleed-${st.focusBleedId}`)
+    } else if (st.focusDoseId) {
+      setSubTabs(prev => ({ ...prev, [st.focusPatientId]: 'history' }))
+      setHighlightKey(`dose-${st.focusDoseId}`)
+    }
+    navigate(location.pathname, { replace: true, state: {} })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state?.nonce, patients])
+
+  useEffect(() => {
+    if (!highlightKey) return
+    rowRefs.current[highlightKey]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const t = setTimeout(() => setHighlightKey(null), 2500)
+    return () => clearTimeout(t)
+  }, [highlightKey])
 
   function load() {
     setLoading(true)
@@ -63,6 +97,36 @@ export default function Provider() {
       setPatients(prev => prev.map(p => p.profile.id === profile.id ? { ...p, profile: { ...p.profile, archived } } : p))
     } catch {
       // no-op — the card just won't move; user can retry
+    }
+  }
+
+  function updateStockField(patientId, medId, field, value) {
+    const num = value === '' ? null : Math.max(0, Number(value))
+    setPatients(prev => prev.map(p => {
+      if (p.profile.id !== patientId) return p
+      const meds = p.meds.map(m => m.id === medId ? { ...m, [field]: num } : m)
+      const updated = meds.find(m => m.id === medId)
+      if (updated) {
+        const timerKey = `${patientId}:${medId}`
+        clearTimeout(writeTimers.current[timerKey])
+        writeTimers.current[timerKey] = setTimeout(() => {
+          db.updateMedicationStock(patientId, medId, {
+            unit_size: updated.unitSize,
+            stock_count: updated.stockCount,
+          }).catch(() => {})
+        }, 600)
+      }
+      return { ...p, meds }
+    }))
+  }
+
+  async function handleSendReminder(profile) {
+    try {
+      await db.sendReminder(profile.id, `Reminder from your care team: don't forget to take your medication.`)
+      setReminderSent(prev => ({ ...prev, [profile.id]: true }))
+      setTimeout(() => setReminderSent(prev => ({ ...prev, [profile.id]: false })), 2500)
+    } catch {
+      // no-op — button label just won't confirm; provider can retry
     }
   }
 
@@ -140,13 +204,24 @@ export default function Provider() {
                     <div className={styles.patientIdCell}>ID {profile.patient_id}</div>
                   </div>
                   {!isConfirming && (
-                    <button
-                      className={styles.removeBtn}
-                      onClick={() => setConfirmId(profile.id)}
-                      aria-label={showArchived ? 'Restore patient' : 'Remove patient from list'}
-                    >
-                      {showArchived ? '↩' : '✕'}
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                      {!showArchived && (
+                        <button
+                          className={styles.reminderBtn}
+                          onClick={() => handleSendReminder(profile)}
+                          disabled={!!reminderSent[profile.id]}
+                        >
+                          {reminderSent[profile.id] ? 'Sent ✓' : 'Send reminder'}
+                        </button>
+                      )}
+                      <button
+                        className={styles.removeBtn}
+                        onClick={() => setConfirmId(profile.id)}
+                        aria-label={showArchived ? 'Restore patient' : 'Remove patient from list'}
+                      >
+                        {showArchived ? '↩' : '✕'}
+                      </button>
+                    </div>
                   )}
                 </div>
 
@@ -183,6 +258,24 @@ export default function Provider() {
                               <div className={styles.chartFill} style={{ width: `${Math.min(status.pct, 100)}%`, background: status.color }} />
                             </div>
                           )}
+                          <div className={styles.stockRow}>
+                            <div className={styles.stockField}>
+                              <label>Units/product</label>
+                              <input
+                                type="number" min="0" placeholder="e.g. 1000"
+                                value={med.unitSize ?? ''}
+                                onChange={e => updateStockField(profile.id, med.id, 'unitSize', e.target.value)}
+                              />
+                            </div>
+                            <div className={styles.stockField}>
+                              <label>Products in stock</label>
+                              <input
+                                type="number" min="0" placeholder="Not tracked"
+                                value={med.stockCount ?? ''}
+                                onChange={e => updateStockField(profile.id, med.id, 'stockCount', e.target.value)}
+                              />
+                            </div>
+                          </div>
                         </div>
                       )
                     })}
@@ -227,8 +320,13 @@ export default function Provider() {
                             // table (see 008_bleed_events.sql) still carry bleed detail
                             // directly on dose_logs -- keep showing it for those old rows.
                             const legacySymptoms = symptomList(log)
+                            const rowKey = `dose-${log.id}`
                             return (
-                            <div key={log.id} className={styles.logRow}>
+                            <div
+                              key={log.id}
+                              ref={el => { rowRefs.current[rowKey] = el }}
+                              className={`${styles.logRow} ${highlightKey === rowKey ? styles.rowHighlight : ''}`}
+                            >
                               <span className={styles.logDate}>
                                 {new Date(log.taken_at).toLocaleDateString('en-CA', { month:'short', day:'numeric', year:'numeric' })}{' '}
                                 {new Date(log.taken_at).toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })}
@@ -256,8 +354,14 @@ export default function Provider() {
                             const meta = SEVERITY_META[b.severity] || SEVERITY_META.mild
                             const treated = logs.some(l => l.bleed_event_id === b.id)
                             const symptoms = symptomList(b)
+                            const rowKey = `bleed-${b.id}`
                             return (
-                              <div key={b.id} className={styles.logRow} style={{ borderLeft: `${meta.border} rgba(${meta.color},1)`, paddingLeft: '0.6rem' }}>
+                              <div
+                                key={b.id}
+                                ref={el => { rowRefs.current[rowKey] = el }}
+                                className={`${styles.logRow} ${highlightKey === rowKey ? styles.rowHighlight : ''}`}
+                                style={{ borderLeft: `${meta.border} rgba(${meta.color},1)`, paddingLeft: '0.6rem' }}
+                              >
                                 <span className={styles.logDate}>
                                   {new Date(b.occurred_at).toLocaleDateString('en-CA', { month:'short', day:'numeric', year:'numeric' })}{' '}
                                   {new Date(b.occurred_at).toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })}

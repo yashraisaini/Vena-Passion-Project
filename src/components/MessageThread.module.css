@@ -1,0 +1,58 @@
+.thread {
+  display: flex; flex-direction: column; height: 100%;
+  border: 1px solid var(--border2); border-radius: 4px; background: #fff;
+  transition: background 0.15s;
+}
+.thread.dragOver { background: rgba(200,16,46,0.05); border-color: var(--accent); }
+.empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--dimmer); font-size: 0.85rem; }
+
+.header {
+  padding: 0.9rem 1.1rem; border-bottom: 1px solid var(--border);
+  font-family: var(--fb); font-weight: 600; font-size: 0.9rem; color: var(--text);
+}
+
+.messages { flex: 1; overflow-y: auto; padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+
+.bubbleRow { display: flex; flex-direction: column; align-items: flex-start; }
+.bubbleRow.own { align-items: flex-end; }
+
+.bubble {
+  max-width: 70%; padding: 0.55rem 0.75rem; border-radius: 10px;
+  background: var(--bg2); color: var(--text); font-size: 0.85rem; line-height: 1.4;
+}
+.own .bubble { background: var(--accent); color: var(--on-accent); }
+.bubbleText { white-space: pre-wrap; word-break: break-word; }
+.bubbleTime { font-family: var(--fm); font-size: 0.58rem; opacity: 0.65; margin-top: 0.25rem; text-align: right; }
+.seen { font-family: var(--fm); font-size: 0.58rem; color: var(--dimmer); margin-top: 0.15rem; margin-right: 0.2rem; }
+
+.attachment { margin: 0.35rem 0; }
+.attachmentImg { max-width: 100%; max-height: 220px; border-radius: 6px; display: block; }
+.attachmentDoc {
+  display: flex; align-items: center; gap: 0.35rem; background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(0,0,0,0.1); border-radius: 4px; padding: 0.4rem 0.6rem;
+  font-family: var(--fb); font-size: 0.78rem; color: inherit; cursor: pointer;
+}
+
+.errorRow { padding: 0.4rem 1.1rem 0; font-size: 0.72rem; color: #ef4444; }
+.pendingRow { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.5rem 1.1rem 0; }
+.pendingChip {
+  display: flex; align-items: center; gap: 0.4rem; background: rgba(36,20,18,0.05);
+  border: 1px solid var(--border2); border-radius: 3px; padding: 0.25rem 0.5rem;
+  font-size: 0.7rem; color: var(--dim);
+}
+.pendingChip button { background: none; border: none; color: var(--dimmer); cursor: pointer; font-size: 0.7rem; }
+
+.composer { display: flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1.1rem; border-top: 1px solid var(--border); }
+.attachBtn { background: none; border: none; font-size: 1.15rem; cursor: pointer; padding: 0.2rem; }
+.textInput {
+  flex: 1; padding: 0.55rem 0.8rem; border: 1px solid var(--border2); border-radius: 20px;
+  font-family: var(--fb); font-size: 0.85rem; outline: none; background: rgba(36,20,18,0.02);
+}
+.textInput:focus { border-color: var(--accent); }
+.sendBtn {
+  font-family: var(--fb); font-weight: 600; font-size: 0.78rem; letter-spacing: 0.03em;
+  padding: 0.55rem 1.1rem; border-radius: 20px; border: none;
+  background: var(--accent); color: var(--on-accent); cursor: pointer; transition: background 0.2s;
+}
+.sendBtn:hover:not(:disabled) { background: var(--accent2); }
+.sendBtn:disabled { opacity: 0.6; cursor: default; }

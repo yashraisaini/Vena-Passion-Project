@@ -7,6 +7,7 @@ import Login     from './pages/Login'
 import ProviderLogin from './pages/ProviderLogin'
 import Dashboard from './pages/Dashboard'
 import Provider  from './pages/Provider'
+import Messages  from './pages/Messages'
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/provider-login" element={<ProviderLogin />} />
         <Route path="/dashboard"      element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/provider"       element={<ProtectedRoute requireRole="provider"><Provider /></ProtectedRoute>} />
+        <Route path="/messages"       element={<ProtectedRoute><Messages /></ProtectedRoute>} />
       </Routes>
     </AuthProvider>
   )

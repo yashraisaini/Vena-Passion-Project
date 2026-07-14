@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Library from '../components/Library'
 import Calendar from '../components/Calendar'
@@ -17,6 +18,8 @@ import styles from './Dashboard.module.css'
 
 export default function Dashboard() {
   const { user, profile, refreshProfile, signOut } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
 
   const [myMeds,      setMyMeds]      = useState([])
   const [doseLogs,    setDoseLogs]    = useState([])
@@ -31,6 +34,17 @@ export default function Dashboard() {
   const [toastShow, setToastShow] = useState(false)
 
   const writeTimers = useRef({})
+
+  // A provider's "send reminder" notification deep-links here to prompt an
+  // immediate dose log -- state.openLogDose is a nonce so re-clicking the
+  // same notification always re-opens it, even without leaving this page.
+  useEffect(() => {
+    if (!location.state?.openLogDose) return
+    setTab('meds')
+    setLogModal({})
+    navigate(location.pathname, { replace: true, state: {} })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state?.openLogDose])
 
   useEffect(() => {
     if (!user) return

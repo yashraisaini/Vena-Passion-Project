@@ -1,0 +1,19 @@
+.icon {
+  position: relative; font-size: 1.35rem; line-height: 1; padding: 0.3rem;
+  opacity: 0.85; transition: opacity 0.25s, transform 0.15s;
+  text-decoration: none; display: inline-flex;
+}
+.icon:hover { opacity: 1; transform: scale(1.08); }
+.icon.glow {
+  opacity: 1;
+  animation: msgGlow 2s ease-in-out infinite;
+}
+@keyframes msgGlow {
+  0%, 100% { text-shadow: 0 0 6px rgba(200,16,46,0.5); }
+  50% { text-shadow: 0 0 14px rgba(200,16,46,0.9), 0 0 24px rgba(200,16,46,0.5); }
+}
+.badge {
+  position: absolute; top: 0; right: 0; min-width: 15px; height: 15px; padding: 0 3px;
+  background: var(--accent); color: var(--on-accent); border-radius: 8px;
+  font-family: var(--fm); font-size: 0.58rem; display: flex; align-items: center; justify-content: center;
+}

@@ -1,0 +1,47 @@
+.page { min-height: 100vh; background: var(--bg); padding: 5.5rem clamp(1.5rem, 5vw, 4rem) 2rem; }
+.empty { padding: 3rem 1rem; text-align: center; color: var(--dimmer); font-size: 0.9rem; }
+.emptySmall { color: var(--dimmer); font-size: 0.75rem; padding: 0.4rem 0.9rem; }
+
+.soloThread { height: calc(100vh - 7.5rem); max-width: 46rem; margin: 0 auto; }
+
+.layout { display: grid; grid-template-columns: 20rem 1fr; gap: 1rem; height: calc(100vh - 7.5rem); }
+
+.sidebar {
+  border: 1px solid var(--border2); border-radius: 4px; background: var(--bg2);
+  overflow-y: auto; display: flex; flex-direction: column;
+}
+.sidebarHead {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.9rem 1rem; font-family: var(--fb); font-weight: 700; font-size: 0.9rem; color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.newBtn {
+  font-family: var(--fm); font-size: 0.65rem; letter-spacing: 0.03em;
+  background: none; border: 1px solid var(--border2); border-radius: 2px; color: var(--dim);
+  padding: 0.3rem 0.6rem; cursor: pointer; transition: all 0.2s;
+}
+.newBtn:hover { border-color: var(--accent); color: var(--accent); }
+
+.picker { border-bottom: 1px solid var(--border); padding: 0.4rem 0; }
+.pickerRow {
+  display: block; width: 100%; text-align: left; background: none; border: none;
+  padding: 0.5rem 1rem; font-family: var(--fb); font-size: 0.8rem; color: var(--text); cursor: pointer;
+}
+.pickerRow:hover { background: rgba(36,20,18,0.04); }
+
+.sectionLabel {
+  font-family: var(--fm); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--dimmer); padding: 0.7rem 1rem 0.3rem;
+}
+
+.convoRow {
+  display: flex; flex-direction: column; gap: 0.15rem; width: 100%; text-align: left;
+  background: none; border: none; padding: 0.55rem 1rem; cursor: pointer; transition: background 0.15s;
+}
+.convoRow:hover { background: rgba(36,20,18,0.04); }
+.convoActive { background: rgba(200,16,46,0.08); }
+.convoName { display: flex; align-items: center; gap: 0.4rem; font-family: var(--fb); font-weight: 600; font-size: 0.82rem; color: var(--text); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+.convoPreview { font-size: 0.72rem; color: var(--dimmer); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.threadPane { min-width: 0; }
