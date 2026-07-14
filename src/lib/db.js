@@ -49,6 +49,9 @@ export async function listDoseLogs(userId) {
 }
 
 export async function insertDoseLog(userId, entry) {
+  // Bleed detail (location/severity/pain/symptoms) now lives on bleed_events —
+  // new doses only carry a bleed_event_id link, not those columns directly.
+  // The columns still exist for rows logged the old way; we just stop writing them.
   const { data, error } = await supabase
     .from('dose_logs')
     .insert({
@@ -60,8 +63,7 @@ export async function insertDoseLog(userId, entry) {
       reason: entry.reason,
       note: entry.note || null,
       products_used: entry.products_used ?? null,
-      bleed_location: entry.bleed_location || null,
-      bleed_side: entry.bleed_side || null,
+      bleed_event_id: entry.bleed_event_id || null,
     })
     .select()
     .single()
@@ -75,6 +77,55 @@ export async function deleteDoseLog(userId, id) {
     .delete()
     .eq('user_id', userId)
     .eq('id', id)
+  if (error) throw error
+}
+
+export async function listBleedEvents(userId) {
+  const { data, error } = await supabase
+    .from('bleed_events')
+    .select('*')
+    .eq('user_id', userId)
+    .order('occurred_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function insertBleedEvent(userId, entry) {
+  const { data, error } = await supabase
+    .from('bleed_events')
+    .insert({
+      user_id: userId,
+      occurred_at: entry.occurred_at,
+      location: entry.location || null,
+      side: entry.side || null,
+      severity: entry.severity || null,
+      pain_level: entry.pain_level ?? null,
+      symptom_swelling: entry.symptom_swelling ?? false,
+      symptom_bruising: entry.symptom_bruising ?? false,
+      symptom_discoloration: entry.symptom_discoloration ?? false,
+      note: entry.note || null,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteBleedEvent(userId, id) {
+  const { error } = await supabase
+    .from('bleed_events')
+    .delete()
+    .eq('user_id', userId)
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function linkDoseToBleedEvent(userId, doseLogId, bleedEventId) {
+  const { error } = await supabase
+    .from('dose_logs')
+    .update({ bleed_event_id: bleedEventId })
+    .eq('user_id', userId)
+    .eq('id', doseLogId)
   if (error) throw error
 }
 
@@ -125,6 +176,15 @@ export async function listAllDoseLogsForProviders() {
     .from('dose_logs')
     .select('*')
     .order('taken_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function listAllBleedEventsForProviders() {
+  const { data, error } = await supabase
+    .from('bleed_events')
+    .select('*')
+    .order('occurred_at', { ascending: false })
   if (error) throw error
   return data
 }

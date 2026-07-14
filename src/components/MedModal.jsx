@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { catMeta } from '../data/medications'
+import { catMeta, factorPctAt } from '../data/medications'
 import styles from './MedModal.module.css'
 
 function FactorChart({ med }) {
@@ -23,11 +23,11 @@ function FactorChart({ med }) {
     elements.push(<line key="ss" x1={pad} x2={W-pad} y1={y} y2={y} stroke="rgba(200,16,46,0.85)" strokeWidth="2.5"/>)
     elements.push(<text key="sst" x={W-pad+3} y={y+4} fill="rgba(200,16,46,0.8)" fontFamily="Space Mono" fontSize="8">~{med.steadyState}%</text>)
   } else if (med.peakPct) {
-    const peak   = med.peakPct / 100
-    const trough = Math.max((med.troughPct || 1) / 100, 0.001)
+    const interval = med.customInterval || Math.round((med.intervalHrs || 72) / 24)
     const pts = Array.from({ length: 41 }, (_, i) => {
       const t = i / 40
-      return `${pad + t * innerW},${(1 - Math.min(peak * Math.pow(trough / peak, t), 1)) * innerH}`
+      const frac = factorPctAt(med, t * interval) / 100
+      return `${pad + t * innerW},${(1 - Math.min(frac, 1)) * innerH}`
     })
     const d = `M${pts.join(' L')}`
     elements.push(<path key="fill" d={`${d} L${W-pad},${innerH} L${pad},${innerH} Z`} fill="rgba(200,16,46,0.07)"/>)

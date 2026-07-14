@@ -34,18 +34,24 @@ export const medications = [
   { id:'amicar',      name:'Aminocaproic acid',generic:'Amicar',                      category:'supportive',route:'Oral or IV',           frequency:'As needed',       halfLife:'2 hrs',     peakPct:null,troughPct:null,intervalHrs:null,steadyState:null, desc:'Antifibrinolytic similar to tranexamic acid. Often used for oral/nasal bleeding as adjunct therapy alongside factor replacement.' },
 ]
 
-export function getFactorStatus(med, daysSinceDose) {
-  if (med.steadyState != null && med.peakPct == null) {
-    const pct = med.steadyState
-    const risk = pct >= 50 ? 'safe' : pct >= 5 ? 'caution' : 'risk'
-    return { pct, risk, label: `~${pct}% (steady state)`, color: risk === 'safe' ? '#22c55e' : risk === 'caution' ? '#c9a96e' : '#ef4444' }
-  }
+// Estimated factor level (0-100) at a given number of days since the dose.
+// Accepts fractional days so callers needing a smooth curve (e.g. a timeline
+// chart) can step in hours; the day-level callers below just pass integers.
+export function factorPctAt(med, daysElapsed) {
+  if (med.steadyState != null && med.peakPct == null) return med.steadyState
   if (!med.peakPct) return null
   const peak   = med.peakPct / 100
   const trough = Math.max((med.troughPct || 1) / 100, 0.001)
   const interval = med.customInterval || Math.round((med.intervalHrs || 72) / 24)
-  const t   = Math.min(daysSinceDose / interval, 1)
-  const pct = Math.round(peak * Math.pow(trough / peak, t) * 100)
-  const risk = pct >= 50 ? 'safe' : pct >= 5 ? 'caution' : 'risk'
-  return { pct, risk, label: `~${pct}%`, color: risk === 'safe' ? '#22c55e' : risk === 'caution' ? '#c9a96e' : '#ef4444' }
+  const t = Math.min(Math.max(daysElapsed, 0) / interval, 1)
+  return Math.round(peak * Math.pow(trough / peak, t) * 100)
+}
+
+export function getFactorStatus(med, daysSinceDose) {
+  const pct = factorPctAt(med, daysSinceDose)
+  if (pct == null) return null
+  const risk  = pct >= 50 ? 'safe' : pct >= 5 ? 'caution' : 'risk'
+  const color = risk === 'safe' ? '#22c55e' : risk === 'caution' ? '#c9a96e' : '#ef4444'
+  const label = (med.steadyState != null && med.peakPct == null) ? `~${pct}% (steady state)` : `~${pct}%`
+  return { pct, risk, label, color }
 }

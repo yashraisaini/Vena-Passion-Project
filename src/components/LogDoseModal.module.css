@@ -21,6 +21,12 @@
 }
 .reasonBtn:hover { border-color: var(--accent); color: var(--text); }
 .reasonBtn.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 700; }
+
+.bleedSection { border: 1px solid rgba(239,68,68,0.2); background: rgba(239,68,68,0.03); border-radius: 3px; padding: 1rem 1rem 0.2rem; margin-bottom: 0.9rem; }
+.bleedHeading { font-family: var(--fm); font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: #ef4444; margin-bottom: 0.9rem; }
+.checkGroup { display: flex; gap: 1rem; flex-wrap: wrap; }
+.checkItem { display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: var(--text); text-transform: none; letter-spacing: 0; font-family: var(--fb); cursor: pointer; }
+.checkItem input { width: auto; accent-color: var(--accent); cursor: pointer; }
 .actions { display: flex; gap: 0.7rem; margin-top: 1.4rem; }
 .btnPrimary { font-family: var(--fb); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.8rem 1.6rem; border-radius: 2px; border: none; background: var(--accent); color: var(--on-accent); cursor: pointer; transition: all 0.25s; }
 .btnPrimary:hover { background: var(--accent2); transform: translateY(-1px); }

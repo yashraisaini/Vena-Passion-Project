@@ -4,22 +4,28 @@ import Library from '../components/Library'
 import Calendar from '../components/Calendar'
 import StartDateModal from '../components/StartDateModal'
 import LogDoseModal from '../components/LogDoseModal'
+import BleedReportModal from '../components/BleedReportModal'
+import BleedFollowupPrompt from '../components/BleedFollowupPrompt'
 import CompleteProfileModal from '../components/CompleteProfileModal'
 import { catMeta, medications } from '../data/medications'
 import { computeMedStatus } from '../lib/factorStatus'
 import { isDoseDueToday, toLocalISODate, hydrateMedRow } from '../lib/schedule'
 import { REASON_LABELS } from '../lib/reasons'
+import { SEVERITY_META, symptomList } from '../lib/bleeds'
 import * as db from '../lib/db'
 import styles from './Dashboard.module.css'
 
 export default function Dashboard() {
   const { user, profile, refreshProfile, signOut } = useAuth()
 
-  const [myMeds,    setMyMeds]    = useState([])
-  const [doseLogs,  setDoseLogs]  = useState([])
+  const [myMeds,      setMyMeds]      = useState([])
+  const [doseLogs,    setDoseLogs]    = useState([])
+  const [bleedEvents, setBleedEvents] = useState([])
   const [loading,   setLoading]   = useState(true)
   const [pendingMed,setPending]   = useState(null)  // med waiting for start date
-  const [logModal,  setLogModal]  = useState(null)  // { med?, defaultReason? } while a LogDoseModal is open
+  const [logModal,  setLogModal]  = useState(null)  // { med?, defaultReason?, linkedBleedEventId?, linkedBleedSummary? } while a LogDoseModal is open
+  const [bleedReportOpen, setBleedReportOpen] = useState(false)
+  const [followupBleed,   setFollowupBleed]   = useState(null) // bleed_event awaiting "have you dosed for this?" decision
   const [tab,       setTab]       = useState('meds') // meds | library | calendar | history
   const [toast,     setToast]     = useState('')
   const [toastShow, setToastShow] = useState(false)
@@ -30,12 +36,13 @@ export default function Dashboard() {
     if (!user) return
     let cancelled = false
     setLoading(true)
-    Promise.all([db.listUserMedications(user.id), db.listDoseLogs(user.id)])
-      .then(([rows, logs]) => {
+    Promise.all([db.listUserMedications(user.id), db.listDoseLogs(user.id), db.listBleedEvents(user.id)])
+      .then(([rows, logs, bleeds]) => {
         if (cancelled) return
         const hydrated = rows.map(row => hydrateMedRow(row, medications)).filter(Boolean)
         setMyMeds(hydrated)
         setDoseLogs(logs)
+        setBleedEvents(bleeds)
       })
       .catch(() => showToast('Failed to load your data'))
       .finally(() => { if (!cancelled) setLoading(false) })
@@ -151,6 +158,49 @@ export default function Dashboard() {
     }
   }
 
+  async function confirmBleedReport(entry) {
+    try {
+      const saved = await db.insertBleedEvent(user.id, entry)
+      setBleedEvents(prev => [saved, ...prev])
+      setBleedReportOpen(false)
+      setFollowupBleed(saved)
+      showToast('Bleed reported')
+    } catch {
+      showToast('Failed to save bleed report — try again')
+    }
+  }
+
+  async function handleLinkExisting(doseLogId) {
+    const bleed = followupBleed
+    try {
+      await db.linkDoseToBleedEvent(user.id, doseLogId, bleed.id)
+      setDoseLogs(prev => prev.map(l => l.id === doseLogId ? { ...l, bleed_event_id: bleed.id } : l))
+      setFollowupBleed(null)
+      showToast('Dose linked to bleed')
+    } catch {
+      showToast('Failed to link dose — try again')
+    }
+  }
+
+  function handleLogNewDoseForBleed() {
+    const bleed = followupBleed
+    setFollowupBleed(null)
+    setLogModal({
+      linkedBleedEventId: bleed.id,
+      linkedBleedSummary: `${bleed.location || 'Bleed'} — ${new Date(bleed.occurred_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`,
+    })
+  }
+
+  async function removeBleedEvent(id) {
+    try {
+      await db.deleteBleedEvent(user.id, id)
+      setBleedEvents(prev => prev.filter(b => b.id !== id))
+      showToast('Bleed report removed')
+    } catch {
+      showToast('Failed to remove bleed report — try again')
+    }
+  }
+
   async function handleCompleteProfile({ first_name, last_name }) {
     await db.updateProfileName(user.id, { first_name, last_name })
     await refreshProfile()
@@ -159,7 +209,7 @@ export default function Dashboard() {
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const dueToday = myMeds.filter(m => isDoseDueToday(m))
 
-  if (profile && (!profile.first_name || !profile.last_name)) {
+  if (profile && profile.role !== 'provider' && (!profile.first_name || !profile.last_name)) {
     return <CompleteProfileModal onConfirm={handleCompleteProfile} />
   }
 
@@ -205,7 +255,7 @@ export default function Dashboard() {
 
       {/* Tabs */}
       <div className={styles.tabs}>
-        {[['meds','My Medications'],['library','Browse Treatments'],['calendar','Calendar'],['history','Dose History']].map(([k,l]) => (
+        {[['meds','My Medications'],['library','Browse Treatments'],['calendar','Calendar'],['history','Dose History'],['bleeds','Bleeds']].map(([k,l]) => (
           <button key={k} className={`${styles.tab} ${tab===k?styles.tabActive:''}`} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
@@ -219,7 +269,10 @@ export default function Dashboard() {
               <h2 className={styles.tabTitle}>My Medications</h2>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
                 {myMeds.length > 0 && (
-                  <button className={styles.btnGhost} onClick={() => setLogModal({})}>+ Log a dose</button>
+                  <>
+                    <button className={styles.btnGhost} onClick={() => setLogModal({})}>+ Log a dose</button>
+                    <button className={styles.btnGhost} onClick={() => setBleedReportOpen(true)}>+ Log a bleed</button>
+                  </>
                 )}
                 <button className={styles.btnGhost} onClick={() => setTab('library')}>Browse treatments →</button>
               </div>
@@ -343,7 +396,9 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className={styles.historyList}>
-                {doseLogs.map(log => (
+                {doseLogs.map(log => {
+                  const symptoms = [log.symptom_swelling && 'Swelling', log.symptom_bruising && 'Bruising', log.symptom_discoloration && 'Discoloration'].filter(Boolean)
+                  return (
                   <div key={log.id} className={styles.historyRow}>
                     <div className={styles.historyDate}>
                       {new Date(log.taken_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -358,6 +413,9 @@ export default function Dashboard() {
                       {log.bleed_location && (
                         <div className={styles.historyNote}>
                           {log.bleed_location}{log.bleed_side && log.bleed_side !== 'N/A' ? ` (${log.bleed_side})` : ''}
+                          {log.severity ? ` · ${log.severity[0].toUpperCase()}${log.severity.slice(1)}` : ''}
+                          {log.pain_level != null ? ` · Pain ${log.pain_level}/10` : ''}
+                          {symptoms.length > 0 ? ` · ${symptoms.join(', ')}` : ''}
                         </div>
                       )}
                       {log.note && <div className={styles.historyNote}>{log.note}</div>}
@@ -365,7 +423,64 @@ export default function Dashboard() {
                     <span className={`${styles.reasonBadge} ${styles[`reason_${log.reason}`]}`}>{REASON_LABELS[log.reason]}</span>
                     <button className={styles.historyRemoveBtn} onClick={() => removeDoseLog(log.id)} aria-label="Remove this log">✕</button>
                   </div>
-                ))}
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── BLEEDS TAB ── */}
+        {tab === 'bleeds' && (
+          <div>
+            <div className={styles.tabHeader}>
+              <h2 className={styles.tabTitle}>Bleeds</h2>
+              <button className={styles.btnGhost} onClick={() => setBleedReportOpen(true)}>+ Log a bleed</button>
+            </div>
+            {bleedEvents.length === 0 ? (
+              <div className={styles.empty}>
+                <p>No bleeds reported yet.</p>
+              </div>
+            ) : (
+              <div className={styles.historyList}>
+                {bleedEvents.map(bleed => {
+                  const treated = doseLogs.some(l => l.bleed_event_id === bleed.id)
+                  const meta = SEVERITY_META[bleed.severity] || SEVERITY_META.mild
+                  const symptoms = symptomList(bleed)
+                  return (
+                    <div key={bleed.id} className={styles.historyRow} style={{ borderLeft: `${meta.border} rgba(${meta.color},1)` }}>
+                      <div className={styles.historyDate}>
+                        {new Date(bleed.occurred_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        <br/>
+                        {new Date(bleed.occurred_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                      </div>
+                      <div className={styles.historyMain}>
+                        <div className={styles.historyMed}>
+                          {bleed.location || 'Bleed'}{bleed.side && bleed.side !== 'N/A' ? ` (${bleed.side})` : ''}
+                          {bleed.pain_level != null ? ` · Pain ${bleed.pain_level}/10` : ''}
+                        </div>
+                        {symptoms.length > 0 && <div className={styles.historyNote}>{symptoms.join(', ')}</div>}
+                        {bleed.note && <div className={styles.historyNote}>{bleed.note}</div>}
+                        <div className={styles.historyNote} style={{ color: treated ? '#22c55e' : 'var(--dimmer)' }}>
+                          {treated ? 'Treated' : 'Not yet treated'}
+                        </div>
+                      </div>
+                      <span className={styles.reasonBadge} style={{ color: `rgba(${meta.color},1)`, borderColor: `rgba(${meta.color},0.4)` }}>{meta.label}</span>
+                      {!treated && (
+                        <button
+                          className={styles.btnGhost}
+                          onClick={() => setLogModal({
+                            linkedBleedEventId: bleed.id,
+                            linkedBleedSummary: `${bleed.location || 'Bleed'} — ${new Date(bleed.occurred_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`,
+                          })}
+                        >
+                          Log dose
+                        </button>
+                      )}
+                      <button className={styles.historyRemoveBtn} onClick={() => removeBleedEvent(bleed.id)} aria-label="Remove this bleed report">✕</button>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -387,9 +502,32 @@ export default function Dashboard() {
         <LogDoseModal
           med={logModal.med}
           myMeds={myMeds}
+          doseLogs={doseLogs}
           defaultReason={logModal.defaultReason || 'prophylaxis'}
+          linkedBleedEventId={logModal.linkedBleedEventId || null}
+          linkedBleedSummary={logModal.linkedBleedSummary || ''}
           onConfirm={confirmLog}
           onClose={() => setLogModal(null)}
+        />
+      )}
+
+      {/* Bleed Report Modal */}
+      {bleedReportOpen && (
+        <BleedReportModal
+          onConfirm={confirmBleedReport}
+          onClose={() => setBleedReportOpen(false)}
+        />
+      )}
+
+      {/* Bleed Followup Prompt */}
+      {followupBleed && (
+        <BleedFollowupPrompt
+          bleedEvent={followupBleed}
+          doseLogs={doseLogs}
+          onLinkExisting={handleLinkExisting}
+          onLogNewDose={handleLogNewDoseForBleed}
+          onSkip={() => setFollowupBleed(null)}
+          onClose={() => setFollowupBleed(null)}
         />
       )}
     </div>

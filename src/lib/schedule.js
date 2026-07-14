@@ -22,6 +22,16 @@ export function isDoseDueToday(med, today = new Date()) {
   return getDoseDays(med, today.getFullYear(), today.getMonth()).includes(today.getDate())
 }
 
+// A rolling projection ("last dose + interval") for "when's the next needle" --
+// deliberately separate from getDoseDays' fixed start-date grid (used by the
+// Calendar), since a patient who's chronically a day early/late makes those
+// two answers legitimately diverge.
+export function getProjectedNextDose(med, lastDoseTakenAt) {
+  if (!lastDoseTakenAt) return null
+  const interval = med.customInterval || Math.round((med.intervalHrs || 72) / 24)
+  return new Date(lastDoseTakenAt.getTime() + interval * 86400000)
+}
+
 const pad = n => n < 10 ? `0${n}` : `${n}`
 
 // Format/parse date-only values without going through UTC (new Date(dateString) and
