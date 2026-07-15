@@ -357,6 +357,26 @@ export async function listProvidersForDM(myId) {
   return data
 }
 
+// ==================== Restock requests ====================
+
+// Inserts a restock_requests row (fires a security-definer trigger that
+// notifies every provider), then posts a matching message into the
+// patient's own care-team thread -- reuses the messaging system's
+// listMyConversations/sendMessage rather than duplicating that logic.
+export async function requestFactorRefill({ patientId, medId, medName, stockCount }) {
+  const { error } = await supabase
+    .from('restock_requests')
+    .insert({ patient_id: patientId, med_id: medId, med_name: medName, stock_count_at_request: stockCount })
+  if (error) throw error
+
+  const conversations = await listMyConversations()
+  const careTeam = conversations.find(c => c.kind === 'patient_team')
+  if (careTeam) {
+    const stockText = stockCount != null ? `${stockCount} product${stockCount === 1 ? '' : 's'} left` : 'running low'
+    await sendMessage(careTeam.id, patientId, `⚠️ Requesting a refill: low on ${medName} (${stockText}).`)
+  }
+}
+
 // ==================== Provider-created patient accounts + diagnosis ====================
 
 export async function createPatientAccount({ email, first_name, last_name, condition, severity_detail }) {

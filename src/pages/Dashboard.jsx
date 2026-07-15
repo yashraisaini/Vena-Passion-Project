@@ -15,6 +15,7 @@ import { isDoseDueToday, toLocalISODate, hydrateMedRow } from '../lib/schedule'
 import { REASON_LABELS } from '../lib/reasons'
 import { SEVERITY_META, symptomList } from '../lib/bleeds'
 import { CONDITIONS, severityPlaceholder } from '../lib/diagnosis'
+import { LOW_STOCK_THRESHOLD } from '../lib/stock'
 import * as db from '../lib/db'
 import styles from './Dashboard.module.css'
 
@@ -256,6 +257,16 @@ export default function Dashboard() {
 
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const dueToday = myMeds.filter(m => isDoseDueToday(m))
+  const lowStockMeds = myMeds.filter(m => m.stockCount != null && m.stockCount < LOW_STOCK_THRESHOLD)
+
+  async function handleRequestRefill(med) {
+    try {
+      await db.requestFactorRefill({ patientId: user.id, medId: med.id, medName: med.name, stockCount: med.stockCount })
+      showToast(`Refill request for ${med.name} sent to your care team`)
+    } catch {
+      showToast('Failed to send refill request — try again')
+    }
+  }
 
   if (profile && profile.role !== 'provider' && (!profile.first_name || !profile.last_name)) {
     return <CompleteProfileModal onConfirm={handleCompleteProfile} />
@@ -315,6 +326,26 @@ export default function Dashboard() {
                 onClick={() => setLogModal({ med: m, defaultReason: 'prophylaxis' })}
               >
                 Log {m.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Low stock banner */}
+      {lowStockMeds.length > 0 && (
+        <div className={styles.needleBanner}>
+          <div className={styles.needleBannerText}>
+            <strong>Running low</strong> on {lowStockMeds.map(m => `${m.name} (${m.stockCount} left)`).join(', ')}.
+          </div>
+          <div className={styles.needleBannerActions}>
+            {lowStockMeds.map(m => (
+              <button
+                key={m.id}
+                className={styles.btnGhost}
+                onClick={() => handleRequestRefill(m)}
+              >
+                Order {m.name}
               </button>
             ))}
           </div>
@@ -446,13 +477,22 @@ export default function Dashboard() {
                           allDoses={doseLogs}
                         />
                       )}
-                      <button
-                        className={styles.btnGhost}
-                        style={{ marginTop: '0.9rem', width: '100%' }}
-                        onClick={() => setLogModal({ med })}
-                      >
-                        Log a dose
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.9rem' }}>
+                        <button
+                          className={styles.btnGhost}
+                          style={{ width: '100%' }}
+                          onClick={() => setLogModal({ med })}
+                        >
+                          Log a dose
+                        </button>
+                        <button
+                          className={styles.btnGhost}
+                          style={{ width: '100%' }}
+                          onClick={() => handleRequestRefill(med)}
+                        >
+                          Order Factor
+                        </button>
+                      </div>
                     </div>
                   )
                 })}

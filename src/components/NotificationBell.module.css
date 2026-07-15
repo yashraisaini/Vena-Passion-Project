@@ -47,5 +47,6 @@
 .row.bleed { border-left-color: #991b1b; }
 .row.dose { border-left-color: var(--gold); }
 .row.reminder { border-left-color: #38bdf8; }
+.row.restock { border-left-color: #b8895a; }
 .rowMsg { font-size: 0.78rem; color: var(--text); }
 .rowTime { font-family: var(--fm); font-size: 0.6rem; color: var(--dimmer); }

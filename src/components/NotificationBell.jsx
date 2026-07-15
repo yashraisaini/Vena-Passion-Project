@@ -5,7 +5,7 @@ import * as db from '../lib/db'
 import styles from './NotificationBell.module.css'
 
 const POLL_MS = 35000
-const TYPE_RANK = { bleed: 0, dose: 1, reminder: 2 }
+const TYPE_RANK = { bleed: 0, restock: 0, dose: 1, reminder: 2 }
 
 export default function NotificationBell() {
   const { user } = useAuth()
@@ -61,6 +61,8 @@ export default function NotificationBell() {
       navigate('/provider', { state: { focusPatientId: n.subject_patient_id, focusBleedId: n.related_id, nonce } })
     } else if (n.type === 'dose') {
       navigate('/provider', { state: { focusPatientId: n.subject_patient_id, focusDoseId: n.related_id, nonce } })
+    } else if (n.type === 'restock') {
+      navigate('/provider', { state: { focusPatientId: n.subject_patient_id, nonce } })
     }
   }
 
