@@ -356,3 +356,33 @@ export async function listProvidersForDM(myId) {
   if (error) throw error
   return data
 }
+
+// ==================== Provider-created patient accounts + diagnosis ====================
+
+export async function createPatientAccount({ email, first_name, last_name, condition, severity_detail }) {
+  const { data, error } = await supabase.functions.invoke('create-patient-account', {
+    body: { email, first_name, last_name, condition, severity_detail },
+  })
+  if (error) {
+    // supabase-js's FunctionsHttpError only carries a generic message on
+    // `.message` -- the actual { error: "..." } body the function sent has
+    // to be read off the raw response context.
+    let message = error.message
+    try {
+      const body = await error.context.json()
+      if (body?.error) message = body.error
+    } catch {
+      // fall back to the generic message
+    }
+    throw new Error(message)
+  }
+  return data
+}
+
+export async function updateMyDiagnosis(userId, { condition, severity_detail }) {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ condition, severity_detail })
+    .eq('id', userId)
+  if (error) throw error
+}

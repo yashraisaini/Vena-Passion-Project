@@ -1,15 +1,23 @@
 import { useState } from 'react'
+import { CONDITIONS, severityPlaceholder } from '../lib/diagnosis'
 import styles from './CompleteProfileModal.module.css'
 
 export default function CompleteProfileModal({ onConfirm }) {
   const [firstName, setFirstName] = useState('')
   const [lastName,  setLastName]  = useState('')
+  const [condition, setCondition] = useState('')
+  const [severity,  setSeverity]  = useState('')
   const [saving,    setSaving]    = useState(false)
 
   async function confirm() {
     if (!firstName.trim() || !lastName.trim()) return
     setSaving(true)
-    await onConfirm({ first_name: firstName.trim(), last_name: lastName.trim() })
+    await onConfirm({
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      condition: condition || null,
+      severity_detail: severity.trim() || null,
+    })
     setSaving(false)
   }
 
@@ -28,6 +36,20 @@ export default function CompleteProfileModal({ onConfirm }) {
         <div className={styles.field}>
           <label>Last name</label>
           <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} />
+        </div>
+        <div className={styles.field}>
+          <label>Condition (optional)</label>
+          <select value={condition} onChange={e => setCondition(e.target.value)}>
+            <option value="">Prefer not to say</option>
+            {CONDITIONS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+          </select>
+        </div>
+        <div className={styles.field}>
+          <label>Severity / type (optional)</label>
+          <input
+            type="text" value={severity} onChange={e => setSeverity(e.target.value)}
+            placeholder={severityPlaceholder(condition)}
+          />
         </div>
         <div className={styles.actions}>
           <button

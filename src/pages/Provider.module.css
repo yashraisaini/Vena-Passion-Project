@@ -35,6 +35,11 @@
 .cardHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
 .patientName { font-family: var(--fb); font-weight: 600; font-size: 1.02rem; color: var(--text); }
 .patientIdCell { font-family: var(--fm); font-size: 0.72rem; color: var(--dim); margin-top: 0.15rem; }
+.diagnosisChip {
+  display: inline-block; margin-top: 0.4rem; font-family: var(--fm); font-size: 0.62rem;
+  letter-spacing: 0.03em; color: var(--gold); background: rgba(184,137,90,0.1);
+  border: 1px solid rgba(184,137,90,0.25); border-radius: 2px; padding: 0.2rem 0.45rem;
+}
 .removeBtn {
   width: 26px; height: 26px; border-radius: 2px; background: transparent;
   border: 1px solid var(--border2); color: var(--dimmer); cursor: pointer;

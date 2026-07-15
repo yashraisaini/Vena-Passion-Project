@@ -6,7 +6,9 @@ import { hydrateMedRow } from '../lib/schedule'
 import { computeMedStatus } from '../lib/factorStatus'
 import { REASON_LABELS } from '../lib/reasons'
 import { SEVERITY_META, symptomList } from '../lib/bleeds'
+import { CONDITION_LABELS } from '../lib/diagnosis'
 import PkTimelineChart from '../components/PkTimelineChart'
+import AddPatientModal from '../components/AddPatientModal'
 import * as db from '../lib/db'
 import styles from './Provider.module.css'
 
@@ -29,6 +31,7 @@ export default function Provider() {
   const [showArchived, setShowArchived] = useState(false)
   const [reminderSent, setReminderSent] = useState({}) // { [patientId]: true }
   const [highlightKey, setHighlightKey] = useState(null) // 'bleed-<id>' | 'dose-<id>', from a clicked notification
+  const [addPatientOpen, setAddPatientOpen] = useState(false)
   const writeTimers = useRef({})
   const rowRefs = useRef({})
 
@@ -88,6 +91,11 @@ export default function Provider() {
       if (next.has(id)) next.delete(id); else next.add(id)
       return next
     })
+  }
+
+  async function handleAddPatient(payload) {
+    await db.createPatientAccount(payload)
+    await load()
   }
 
   async function handleArchive(profile, archived) {
@@ -180,10 +188,15 @@ export default function Provider() {
           <button className={styles.btnGhost} onClick={() => setShowArchived(s => !s)}>
             {showArchived ? 'Show active patients' : 'Show archived'}
           </button>
+          <button className={styles.btnPrimary} onClick={() => setAddPatientOpen(true)}>+ Add Patient</button>
           <button className={styles.btnPrimary} onClick={exportCSV} disabled={!patients.length}>Export to CSV</button>
           <button className={styles.btnGhost} onClick={signOut}>Sign out</button>
         </div>
       </div>
+
+      {addPatientOpen && (
+        <AddPatientModal onConfirm={handleAddPatient} onClose={() => setAddPatientOpen(false)} />
+      )}
 
       {loading ? (
         <p className={styles.empty}>Loading patients…</p>
@@ -202,6 +215,12 @@ export default function Provider() {
                   <div>
                     <div className={styles.patientName}>{profile.first_name} {profile.last_name}</div>
                     <div className={styles.patientIdCell}>ID {profile.patient_id}</div>
+                    {profile.condition && (
+                      <div className={styles.diagnosisChip}>
+                        {CONDITION_LABELS[profile.condition] || profile.condition}
+                        {profile.severity_detail ? ` — ${profile.severity_detail}` : ''}
+                      </div>
+                    )}
                   </div>
                   {!isConfirming && (
                     <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>

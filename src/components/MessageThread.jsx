@@ -45,7 +45,12 @@ export default function MessageThread({ conversation, currentUserId, title, onSe
   }
 
   useEffect(() => {
-    const missing = attachments.filter(a => IMAGE_TYPES.includes(a.mime_type) && !signedUrls[a.storage_path])
+    // Pre-fetch signed URLs for every attachment (not just images) so the
+    // document link is a plain synchronous <a href> by the time it's
+    // rendered -- window.open() called after an async fetch (i.e. inside a
+    // click handler's .then()) gets silently killed by the browser's popup
+    // blocker since it's no longer a direct result of the user gesture.
+    const missing = attachments.filter(a => !signedUrls[a.storage_path])
     if (missing.length === 0) return
     Promise.all(missing.map(a => db.getAttachmentSignedUrl(a.storage_path).then(url => [a.storage_path, url]).catch(() => null)))
       .then(pairs => {
@@ -140,13 +145,18 @@ export default function MessageThread({ conversation, currentUserId, title, onSe
                       <a href={signedUrls[a.storage_path]} target="_blank" rel="noreferrer">
                         <img src={signedUrls[a.storage_path]} alt={a.file_name} className={styles.attachmentImg} />
                       </a>
-                    ) : (
-                      <button
+                    ) : signedUrls[a.storage_path] ? (
+                      <a
                         className={styles.attachmentDoc}
-                        onClick={() => db.getAttachmentSignedUrl(a.storage_path).then(url => window.open(url, '_blank'))}
+                        href={signedUrls[a.storage_path]}
+                        target="_blank"
+                        rel="noreferrer"
+                        download={a.file_name}
                       >
                         📄 {a.file_name}
-                      </button>
+                      </a>
+                    ) : (
+                      <span className={styles.attachmentDoc}>📄 {a.file_name}</span>
                     )}
                   </div>
                 ))}

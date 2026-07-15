@@ -13,6 +13,7 @@ import { computeMedStatus } from '../lib/factorStatus'
 import { isDoseDueToday, toLocalISODate, hydrateMedRow } from '../lib/schedule'
 import { REASON_LABELS } from '../lib/reasons'
 import { SEVERITY_META, symptomList } from '../lib/bleeds'
+import { CONDITIONS, severityPlaceholder } from '../lib/diagnosis'
 import * as db from '../lib/db'
 import styles from './Dashboard.module.css'
 
@@ -215,9 +216,32 @@ export default function Dashboard() {
     }
   }
 
-  async function handleCompleteProfile({ first_name, last_name }) {
+  async function handleCompleteProfile({ first_name, last_name, condition, severity_detail }) {
     await db.updateProfileName(user.id, { first_name, last_name })
+    if (condition || severity_detail) {
+      await db.updateMyDiagnosis(user.id, { condition, severity_detail })
+    }
     await refreshProfile()
+  }
+
+  const [diagCondition, setDiagCondition] = useState('')
+  const [diagSeverity,  setDiagSeverity]  = useState('')
+
+  useEffect(() => {
+    setDiagCondition(profile?.condition || '')
+    setDiagSeverity(profile?.severity_detail || '')
+  }, [profile?.condition, profile?.severity_detail])
+
+  function updateDiagnosisField(field, value) {
+    const next = {
+      condition: field === 'condition' ? value : diagCondition,
+      severity_detail: field === 'severity_detail' ? value : diagSeverity,
+    }
+    if (field === 'condition') setDiagCondition(value); else setDiagSeverity(value)
+    clearTimeout(writeTimers.current.diagnosis)
+    writeTimers.current.diagnosis = setTimeout(() => {
+      db.updateMyDiagnosis(user.id, next).catch(() => showToast('Failed to save diagnosis'))
+    }, 600)
   }
 
   const today = new Date(); today.setHours(0, 0, 0, 0)
@@ -241,6 +265,26 @@ export default function Dashboard() {
               <div className={styles.userName}>{user?.user_metadata?.full_name || 'Welcome back'}</div>
               <div className={styles.userEmail}>{user?.email}</div>
               {profile?.patient_id && <div className={styles.patientId}>Patient ID: {profile.patient_id}</div>}
+              {profile?.role !== 'provider' && (
+                <div className={styles.diagnosisRow}>
+                  <select
+                    className={styles.diagnosisSelect}
+                    value={diagCondition}
+                    onChange={e => updateDiagnosisField('condition', e.target.value)}
+                  >
+                    <option value="">Set diagnosis…</option>
+                    {CONDITIONS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                  </select>
+                  {diagCondition && (
+                    <input
+                      className={styles.diagnosisInput}
+                      value={diagSeverity}
+                      placeholder={severityPlaceholder(diagCondition)}
+                      onChange={e => updateDiagnosisField('severity_detail', e.target.value)}
+                    />
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <button className={styles.signOut} onClick={signOut}>Sign out</button>
