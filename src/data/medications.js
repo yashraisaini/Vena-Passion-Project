@@ -8,43 +8,73 @@ export const catMeta = {
 }
 
 export const medications = [
-  { id:'advate',      name:'Advate',          generic:'octocog alfa',                category:'factor8',   route:'IV infusion',          frequency:'2–3x/week',       halfLife:'8–12 hrs',  peakPct:100, troughPct:2,  intervalHrs:72,  steadyState:null, desc:'Standard recombinant factor VIII for routine prophylaxis and on-demand treatment in hemophilia A. Well-established safety profile with decades of use.' },
-  { id:'eloctate',    name:'Eloctate',         generic:'efmoroctocog alfa',           category:'factor8',   route:'IV infusion',          frequency:'Every 3–4 days',  halfLife:'19 hrs',    peakPct:100, troughPct:5,  intervalHrs:84,  steadyState:null, desc:'Extended half-life rFVIII-Fc fusion protein. Approximately 1.5× longer half-life than standard factor VIII, allowing less frequent dosing.' },
-  { id:'altuviiio',   name:'Altuviiio',        generic:'efanesoctocog alfa',          category:'factor8',   route:'IV infusion',          frequency:'Once weekly',     halfLife:'~41 hrs',   peakPct:100, troughPct:15, intervalHrs:168, steadyState:null, desc:'First-in-class high-sustained factor VIII. Maintains near-normal levels (>40%) for most of the week on once-weekly 50 IU/kg dosing.' },
-  { id:'afstyla',     name:'Afstyla',          generic:'lonoctocog alfa',             category:'factor8',   route:'IV infusion',          frequency:'2x/week',         halfLife:'14–15 hrs', peakPct:100, troughPct:3,  intervalHrs:84,  steadyState:null, desc:'Single-chain recombinant factor VIII for routine prophylaxis and on-demand bleed control. Slightly extended half-life vs. standard products.' },
-  { id:'jivi',        name:'Jivi',             generic:'damoctocog alfa pegol',       category:'factor8',   route:'IV infusion',          frequency:'Every 5–7 days',  halfLife:'17–19 hrs', peakPct:100, troughPct:4,  intervalHrs:120, steadyState:null, desc:'PEGylated extended half-life factor VIII. Dosing every 5 days maintained troughs above 1% in most trial patients.' },
-  { id:'kovaltry',    name:'Kovaltry',         generic:'octocog alfa',                category:'factor8',   route:'IV infusion',          frequency:'2–3x/week',       halfLife:'11–12 hrs', peakPct:100, troughPct:2,  intervalHrs:72,  steadyState:null, desc:'Full-length unmodified recombinant factor VIII for routine prophylaxis and bleed treatment in hemophilia A.' },
-  { id:'nuwiq',       name:'Nuwiq',            generic:'simoctocog alfa',             category:'factor8',   route:'IV infusion',          frequency:'2–3x/week',       halfLife:'11–13 hrs', peakPct:100, troughPct:3,  intervalHrs:72,  steadyState:null, desc:'Human cell line-derived recombinant factor VIII with potentially lower immunogenicity. Used for prophylaxis and bleed treatment.' },
-  { id:'esperoct',    name:'Esperoct',         generic:'turoctocog alfa pegol',       category:'factor8',   route:'IV infusion',          frequency:'Every 4 days',    halfLife:'~18 hrs',   peakPct:100, troughPct:4,  intervalHrs:96,  steadyState:null, desc:'PEGylated extended half-life factor VIII allowing every-4-day dosing for routine prophylaxis in hemophilia A.' },
-  { id:'benefix',     name:'BeneFIX',          generic:'nonacog alfa',                category:'factor9',   route:'IV infusion',          frequency:'2x/week',         halfLife:'18–24 hrs', peakPct:80,  troughPct:2,  intervalHrs:84,  steadyState:null, desc:'Standard recombinant factor IX for hemophilia B prophylaxis and on-demand treatment. FIX recovers at roughly 0.8 IU/dL per IU/kg.' },
-  { id:'alprolix',    name:'Alprolix',         generic:'eftrenonacog alfa',           category:'factor9',   route:'IV infusion',          frequency:'Every 1–2 weeks', halfLife:'82–86 hrs', peakPct:80,  troughPct:5,  intervalHrs:168, steadyState:null, desc:'Extended half-life rFIX-Fc fusion protein. 3–4× longer half-life than standard factor IX; can be dosed weekly to bi-weekly.' },
-  { id:'idelvion',    name:'Idelvion',         generic:'albutrepenonacog alfa',       category:'factor9',   route:'IV infusion',          frequency:'Every 7–14 days', halfLife:'~104 hrs',  peakPct:80,  troughPct:5,  intervalHrs:168, steadyState:null, desc:'Albumin-fused recombinant factor IX with the longest half-life of approved FIX products. Many patients dose every 14 days.' },
-  { id:'rebinyn',     name:'Rebinyn',          generic:'nonacog beta pegol',          category:'factor9',   route:'IV infusion',          frequency:'Weekly',          halfLife:'~93 hrs',   peakPct:80,  troughPct:4,  intervalHrs:168, steadyState:null, desc:'PEGylated extended half-life factor IX for weekly prophylaxis and on-demand treatment in hemophilia B.' },
+  { id:'advate',      name:'Advate',          generic:'octocog alfa',                category:'factor8',   route:'IV infusion',          frequency:'2–3x/week',       halfLife:'8–12 hrs',  halfLifeHrs:10,  peakPct:100, troughPct:2,  intervalHrs:72,  steadyState:null, desc:'Standard recombinant factor VIII for routine prophylaxis and on-demand treatment in hemophilia A. Well-established safety profile with decades of use.' },
+  { id:'eloctate',    name:'Eloctate',         generic:'efmoroctocog alfa',           category:'factor8',   route:'IV infusion',          frequency:'Every 3–4 days',  halfLife:'19 hrs',    halfLifeHrs:19,  peakPct:100, troughPct:5,  intervalHrs:84,  steadyState:null, desc:'Extended half-life rFVIII-Fc fusion protein. Approximately 1.5× longer half-life than standard factor VIII, allowing less frequent dosing.' },
+  { id:'altuviiio',   name:'Altuviiio',        generic:'efanesoctocog alfa',          category:'factor8',   route:'IV infusion',          frequency:'Once weekly',     halfLife:'~41 hrs',   halfLifeHrs:41,  peakPct:100, troughPct:15, intervalHrs:168, steadyState:null, desc:'First-in-class high-sustained factor VIII. Maintains near-normal levels (>40%) for most of the week on once-weekly 50 IU/kg dosing.' },
+  { id:'afstyla',     name:'Afstyla',          generic:'lonoctocog alfa',             category:'factor8',   route:'IV infusion',          frequency:'2x/week',         halfLife:'14–15 hrs', halfLifeHrs:14.5,peakPct:100, troughPct:3,  intervalHrs:84,  steadyState:null, desc:'Single-chain recombinant factor VIII for routine prophylaxis and on-demand bleed control. Slightly extended half-life vs. standard products.' },
+  { id:'jivi',        name:'Jivi',             generic:'damoctocog alfa pegol',       category:'factor8',   route:'IV infusion',          frequency:'Every 5–7 days',  halfLife:'17–19 hrs', halfLifeHrs:18,  peakPct:100, troughPct:4,  intervalHrs:120, steadyState:null, desc:'PEGylated extended half-life factor VIII. Dosing every 5 days maintained troughs above 1% in most trial patients.' },
+  { id:'kovaltry',    name:'Kovaltry',         generic:'octocog alfa',                category:'factor8',   route:'IV infusion',          frequency:'2–3x/week',       halfLife:'11–12 hrs', halfLifeHrs:11.5,peakPct:100, troughPct:2,  intervalHrs:72,  steadyState:null, desc:'Full-length unmodified recombinant factor VIII for routine prophylaxis and bleed treatment in hemophilia A.' },
+  { id:'nuwiq',       name:'Nuwiq',            generic:'simoctocog alfa',             category:'factor8',   route:'IV infusion',          frequency:'2–3x/week',       halfLife:'11–13 hrs', halfLifeHrs:12,  peakPct:100, troughPct:3,  intervalHrs:72,  steadyState:null, desc:'Human cell line-derived recombinant factor VIII with potentially lower immunogenicity. Used for prophylaxis and bleed treatment.' },
+  { id:'esperoct',    name:'Esperoct',         generic:'turoctocog alfa pegol',       category:'factor8',   route:'IV infusion',          frequency:'Every 4 days',    halfLife:'~18 hrs',   halfLifeHrs:18,  peakPct:100, troughPct:4,  intervalHrs:96,  steadyState:null, desc:'PEGylated extended half-life factor VIII allowing every-4-day dosing for routine prophylaxis in hemophilia A.' },
+  { id:'benefix',     name:'BeneFIX',          generic:'nonacog alfa',                category:'factor9',   route:'IV infusion',          frequency:'2x/week',         halfLife:'18–24 hrs', halfLifeHrs:21,  peakPct:80,  troughPct:2,  intervalHrs:84,  steadyState:null, desc:'Standard recombinant factor IX for hemophilia B prophylaxis and on-demand treatment. FIX recovers at roughly 0.8 IU/dL per IU/kg.' },
+  { id:'alprolix',    name:'Alprolix',         generic:'eftrenonacog alfa',           category:'factor9',   route:'IV infusion',          frequency:'Every 1–2 weeks', halfLife:'82–86 hrs', halfLifeHrs:84,  peakPct:80,  troughPct:5,  intervalHrs:168, steadyState:null, desc:'Extended half-life rFIX-Fc fusion protein. 3–4× longer half-life than standard factor IX; can be dosed weekly to bi-weekly.' },
+  { id:'idelvion',    name:'Idelvion',         generic:'albutrepenonacog alfa',       category:'factor9',   route:'IV infusion',          frequency:'Every 7–14 days', halfLife:'~104 hrs',  halfLifeHrs:104, peakPct:80,  troughPct:5,  intervalHrs:168, steadyState:null, desc:'Albumin-fused recombinant factor IX with the longest half-life of approved FIX products. Many patients dose every 14 days.' },
+  { id:'rebinyn',     name:'Rebinyn',          generic:'nonacog beta pegol',          category:'factor9',   route:'IV infusion',          frequency:'Weekly',          halfLife:'~93 hrs',   halfLifeHrs:93,  peakPct:80,  troughPct:4,  intervalHrs:168, steadyState:null, desc:'PEGylated extended half-life factor IX for weekly prophylaxis and on-demand treatment in hemophilia B.' },
   { id:'hemlibra',    name:'Hemlibra',         generic:'emicizumab-kxwh',             category:'nonfactor', route:'Subcutaneous',         frequency:'Weekly–monthly',  halfLife:'~28 days',  peakPct:null,troughPct:null,intervalHrs:168, steadyState:12,  desc:'Bispecific antibody bridging FIXa and FX to mimic FVIII. Reaches steady-state equivalent to ~10–15% FVIII activity.' },
   { id:'hympavzi',    name:'Hympavzi',         generic:'marstacimab',                 category:'nonfactor', route:'Subcutaneous',         frequency:'Once weekly',     halfLife:'~3 weeks',  peakPct:null,troughPct:null,intervalHrs:168, steadyState:10,  desc:'Anti-TFPI antibody delivered by auto-injector. Blocks TFPI rather than replacing missing factor. Once weekly dosing.' },
   { id:'alhemo',      name:'Alhemo',           generic:'concizumab',                  category:'nonfactor', route:'Subcutaneous',         frequency:'Once daily',      halfLife:'~3–4 days', peakPct:null,troughPct:null,intervalHrs:24,  steadyState:10,  desc:'Anti-TFPI antibody administered daily by subcutaneous injection. For hemophilia A or B with or without inhibitors.' },
   { id:'qfitlia',     name:'Qfitlia',          generic:'fitusiran',                   category:'nonfactor', route:'Subcutaneous',         frequency:'Monthly',         halfLife:'~5 months', peakPct:null,troughPct:null,intervalHrs:720, steadyState:15,  desc:'siRNA therapy targeting antithrombin. Monthly subcutaneous injection rebalancing hemostasis.' },
-  { id:'vonvendi',    name:'Vonvendi',         generic:'vonicog alfa',                category:'vwd',       route:'IV infusion',          frequency:'On-demand',       halfLife:'~24 hrs',   peakPct:100, troughPct:5,  intervalHrs:48,  steadyState:null, desc:'Recombinant von Willebrand factor for VWD bleeding episodes and surgical management.' },
-  { id:'humatep',     name:'Humate-P',         generic:'VWF/FVIII concentrate',       category:'vwd',       route:'IV infusion',          frequency:'On-demand',       halfLife:'~10–17 hrs',peakPct:100, troughPct:5,  intervalHrs:48,  steadyState:null, desc:'Plasma-derived VWF and FVIII concentrate with 2.4:1 VWF:FVIII ratio for VWD management.' },
-  { id:'wilate',      name:'Wilate',           generic:'VWF/FVIII concentrate',       category:'vwd',       route:'IV infusion',          frequency:'On-demand',       halfLife:'~10–16 hrs',peakPct:100, troughPct:5,  intervalHrs:48,  steadyState:null, desc:'Plasma-derived VWF:FVIII 1:1 ratio concentrate for treatment and prevention in VWD.' },
-  { id:'ddavp',       name:'Desmopressin',     generic:'DDAVP',                       category:'vwd',       route:'IV, SC, or nasal spray',frequency:'As needed',       halfLife:'2–3 hrs',   peakPct:400, troughPct:0,  intervalHrs:24,  steadyState:null, desc:'Releases stored endogenous VWF and FVIII. Best for type 1 VWD. Peak effect at 30–90 min; effect wanes after ~12 hours.' },
+  { id:'vonvendi',    name:'Vonvendi',         generic:'vonicog alfa',                category:'vwd',       route:'IV infusion',          frequency:'On-demand',       halfLife:'~24 hrs',   halfLifeHrs:24,  peakPct:100, troughPct:5,  intervalHrs:48,  steadyState:null, desc:'Recombinant von Willebrand factor for VWD bleeding episodes and surgical management.' },
+  { id:'humatep',     name:'Humate-P',         generic:'VWF/FVIII concentrate',       category:'vwd',       route:'IV infusion',          frequency:'On-demand',       halfLife:'~10–17 hrs',halfLifeHrs:13.5,peakPct:100, troughPct:5,  intervalHrs:48,  steadyState:null, desc:'Plasma-derived VWF and FVIII concentrate with 2.4:1 VWF:FVIII ratio for VWD management.' },
+  { id:'wilate',      name:'Wilate',           generic:'VWF/FVIII concentrate',       category:'vwd',       route:'IV infusion',          frequency:'On-demand',       halfLife:'~10–16 hrs',halfLifeHrs:13,  peakPct:100, troughPct:5,  intervalHrs:48,  steadyState:null, desc:'Plasma-derived VWF:FVIII 1:1 ratio concentrate for treatment and prevention in VWD.' },
+  { id:'ddavp',       name:'Desmopressin',     generic:'DDAVP',                       category:'vwd',       route:'IV, SC, or nasal spray',frequency:'As needed',       halfLife:'2–3 hrs',   halfLifeHrs:2.5, peakPct:400, troughPct:0,  intervalHrs:24,  steadyState:null, desc:'Releases stored endogenous VWF and FVIII. Best for type 1 VWD. Peak effect at 30–90 min; effect wanes after ~12 hours.' },
   { id:'hemgenix',    name:'Hemgenix',         generic:'etranacogene dezaparvovec',   category:'gene',      route:'Single IV infusion',   frequency:'One-time',        halfLife:'N/A',       peakPct:null,troughPct:null,intervalHrs:null,steadyState:35,  desc:'One-time gene therapy for hemophilia B. Median FIX activity ~41% at 18 months post-infusion via high-activity FIX Padua variant.' },
   { id:'roctavian',   name:'Roctavian',        generic:'valoctocogene roxaparvovec',  category:'gene',      route:'Single IV infusion',   frequency:'One-time',        halfLife:'N/A',       peakPct:null,troughPct:null,intervalHrs:null,steadyState:20,  desc:'One-time gene therapy for hemophilia A. FVIII levels vary significantly between individuals. Discuss long-term trajectory with your HTC.' },
   { id:'tranexamic',  name:'Tranexamic acid',  generic:'Lysteda / Cyklokapron',       category:'supportive',route:'Oral or IV',           frequency:'As needed',       halfLife:'2–3 hrs',   peakPct:null,troughPct:null,intervalHrs:null,steadyState:null, desc:'Antifibrinolytic stabilizing clots by inhibiting plasminogen activation. Used for mucosal bleeding, dental procedures, and heavy periods.' },
   { id:'amicar',      name:'Aminocaproic acid',generic:'Amicar',                      category:'supportive',route:'Oral or IV',           frequency:'As needed',       halfLife:'2 hrs',     peakPct:null,troughPct:null,intervalHrs:null,steadyState:null, desc:'Antifibrinolytic similar to tranexamic acid. Often used for oral/nasal bleeding as adjunct therapy alongside factor replacement.' },
 ]
 
-// Estimated factor level (0-100) at a given number of days since the dose.
+// Estimated factor level (0-100, or up to 400 for DDAVP's transient boost)
+// at a given number of days since the dose, using real first-order
+// elimination: pct(t) = peak * 0.5^(t / halfLife). This depends ONLY on the
+// drug's own half-life and elapsed time -- deliberately NOT on
+// customInterval/intervalHrs (how often the patient chooses to dose).
+// Decay rate is a fixed property of the drug, not of the dosing schedule --
+// earlier this app rescaled the curve to whatever interval the patient
+// picked, which made more frequent dosing look like it decayed *faster*
+// (backwards: dosing more often should keep levels higher, since you top up
+// sooner relative to the same decay rate). troughPct/intervalHrs are label
+// reference data only now, not read here.
+//
 // Accepts fractional days so callers needing a smooth curve (e.g. a timeline
 // chart) can step in hours; the day-level callers below just pass integers.
 export function factorPctAt(med, daysElapsed) {
   if (med.steadyState != null && med.peakPct == null) return med.steadyState
-  if (!med.peakPct) return null
-  const peak   = med.peakPct / 100
-  const trough = Math.max((med.troughPct || 1) / 100, 0.001)
-  const interval = med.customInterval || Math.round((med.intervalHrs || 72) / 24)
-  const t = Math.min(Math.max(daysElapsed, 0) / interval, 1)
-  return Math.round(peak * Math.pow(trough / peak, t) * 100)
+  if (!med.peakPct || !med.halfLifeHrs) return null
+  const halfLifeDays = med.halfLifeHrs / 24
+  const t = Math.max(daysElapsed, 0)
+  const pct = med.peakPct * Math.pow(0.5, t / halfLifeDays)
+  return Math.round(Math.max(pct, 0))
+}
+
+// The theoretical trough right before your NEXT dose, if you dose exactly
+// every `intervalDays` -- distinct from factorPctAt/getFactorStatus, which
+// answer "what's my level right now given my actual last dose." This
+// answers "if I keep to this schedule, how low does it get before I
+// re-dose," which is what actually changes as you adjust your dosing
+// frequency -- factorPctAt deliberately does NOT depend on interval (decay
+// rate is a drug property), so this is the piece that was missing for
+// answering "why doesn't the level change when I dose more/less often."
+//
+// This app's PK model resets each dose back to roughly peakPct rather than
+// modeling true multi-dose accumulation (see pkTimeline.js's
+// buildDecaySegments) -- consistent with that simplification, this is just
+// peakPct decayed by exactly one full interval, not a compounding
+// steady-state accumulation formula.
+export function expectedTroughAt(med, intervalDays) {
+  if (!med.peakPct || !med.halfLifeHrs) return null
+  const halfLifeDays = med.halfLifeHrs / 24
+  return Math.round(Math.max(med.peakPct * Math.pow(0.5, intervalDays / halfLifeDays), 0))
 }
 
 export function getFactorStatus(med, daysSinceDose) {

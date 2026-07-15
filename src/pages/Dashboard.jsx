@@ -8,7 +8,8 @@ import LogDoseModal from '../components/LogDoseModal'
 import BleedReportModal from '../components/BleedReportModal'
 import BleedFollowupPrompt from '../components/BleedFollowupPrompt'
 import CompleteProfileModal from '../components/CompleteProfileModal'
-import { catMeta, medications } from '../data/medications'
+import PkTimelineChart from '../components/PkTimelineChart'
+import { catMeta, medications, expectedTroughAt } from '../data/medications'
 import { computeMedStatus } from '../lib/factorStatus'
 import { isDoseDueToday, toLocalISODate, hydrateMedRow } from '../lib/schedule'
 import { REASON_LABELS } from '../lib/reasons'
@@ -33,6 +34,15 @@ export default function Dashboard() {
   const [tab,       setTab]       = useState('meds') // meds | library | calendar | history
   const [toast,     setToast]     = useState('')
   const [toastShow, setToastShow] = useState(false)
+  const [chartOpenIds, setChartOpenIds] = useState(() => new Set())
+
+  function toggleChart(id) {
+    setChartOpenIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
 
   const writeTimers = useRef({})
 
@@ -348,13 +358,15 @@ export default function Dashboard() {
                   const sd = med.startDate ? med.startDate.toLocaleDateString('en-CA', { month:'short', day:'numeric', year:'numeric' }) : '—'
 
                   const status = computeMedStatus(med, doseLogs, today)
+                  const expectedTrough = expectedTroughAt(med, interval)
+                  const chartOpen = chartOpenIds.has(med.id)
                   const riskLabels = {
                     safe:    'Well protected — safe for sports & activity',
                     caution: 'Mild range — light activity only',
                     risk:    'Low protection — rest, avoid activity',
                   }
                   return (
-                    <div key={med.id} className={styles.medCard}>
+                    <div key={med.id} className={styles.medCard} style={chartOpen ? { gridColumn: '1 / -1' } : undefined}>
                       <button className={styles.removeBtn} onClick={() => removeMed(med.id, med.name)} aria-label={`Remove ${med.name}`}>✕</button>
                       <div className={styles.medName}>{med.name}</div>
                       <div className={styles.medGeneric}>{med.generic}</div>
@@ -400,7 +412,7 @@ export default function Dashboard() {
                       {status && (
                         <div className={styles.gauge}>
                           <div className={styles.gaugeLabel}>
-                            <span>Est. factor level</span>
+                            <span>Est. factor level now</span>
                             <span style={{ color: status.color }}>{status.label}</span>
                           </div>
                           <div className={styles.gaugeTrack}>
@@ -411,6 +423,28 @@ export default function Dashboard() {
                             <span className={styles.riskLabel}>{riskLabels[status.risk]}</span>
                           </div>
                         </div>
+                      )}
+                      {expectedTrough != null && (
+                        <p className={styles.stockNote}>
+                          Dosing every {interval} day{interval === 1 ? '' : 's'}, your level would typically
+                          dip to <strong>~{expectedTrough}%</strong> right before your next dose.
+                          {interval > 1 && ` Dose more often and that number goes up; less often and it goes down.`}
+                        </p>
+                      )}
+                      <button
+                        className={styles.btnGhost}
+                        style={{ marginTop: '0.6rem', width: '100%' }}
+                        onClick={() => toggleChart(med.id)}
+                      >
+                        {chartOpen ? 'Hide detailed chart' : 'Show detailed chart'}
+                      </button>
+                      {chartOpen && (
+                        <PkTimelineChart
+                          med={med}
+                          doses={doseLogs.filter(l => l.med_id === med.id)}
+                          bleedEvents={bleedEvents}
+                          allDoses={doseLogs}
+                        />
                       )}
                       <button
                         className={styles.btnGhost}
