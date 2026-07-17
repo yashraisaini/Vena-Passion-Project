@@ -11,39 +11,6 @@ https://vena-passion-project.vercel.app
 
 ---
 
-## Setup
-
-### 1. Install dependencies
-```bash
-npm install
-```
-
-### 2. Create a Supabase project
-1. Go to [supabase.com](https://supabase.com) and create a new project
-2. Go to **Settings → API** and copy your **Project URL** and **anon public** key
-
-### 3. Configure environment variables
-```bash
-cp .env.example .env
-```
-Fill in your Supabase URL and anon key.
-
-### 4. Enable Google OAuth in Supabase
-1. In your Supabase project go to **Authentication → Providers**
-2. Enable **Google**
-3. Add your Google OAuth credentials (from Google Cloud Console)
-4. Set your redirect URL to `http://localhost:5173` for dev, and your production URL for prod
-
-### 5. Run the database schema
-In your Supabase project go to **SQL Editor** and run the contents of `supabase/schema.sql`
-
-### 6. Start the dev server
-```bash
-npm run dev
-```
-
----
-
 ## Project Structure
 ```
 src/
@@ -66,10 +33,5 @@ src/
 └── data/
     └── medications.js    25 medications with pharmacokinetic data
 ```
-
-## Deploying to GitHub Pages / Vercel
-- **Vercel** (recommended): connect your GitHub repo, add env vars, deploy
-- **GitHub Pages**: run `npm run build`, push the `dist/` folder
-
 ## Disclaimer
 VENA is a personal passion project and educational tool. Factor level estimates are population averages from published clinical trial data and are not personalized medical advice. Always follow guidance from your hemophilia treatment centre.
