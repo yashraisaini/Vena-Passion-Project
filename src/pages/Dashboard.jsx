@@ -374,6 +374,7 @@ export default function Dashboard() {
                   </>
                 )}
                 <button className={styles.btnGhost} onClick={() => setTab('library')}>Browse treatments →</button>
+                <button className={styles.btnGhost} onClick={() => navigate('/injection-guide')}>🎥 Guided infusion (beta)</button>
               </div>
             </div>
             {!loading && myMeds.length === 0 ? (
