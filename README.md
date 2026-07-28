@@ -8,6 +8,7 @@ https://vena-passion-project.vercel.app
 - **Backend/Auth**: Supabase (Postgres + Google OAuth)
 - **Routing**: React Router v6
 - **Deployment**: Vercel or Netlify (frontend) + Supabase (backend)
+- enjoy!
 
 ---
 
