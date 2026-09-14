@@ -35,4 +35,4 @@ src/
     └── medications.js    25 medications with pharmacokinetic data
 ```
 ## Disclaimer
-VENA is a personal passion project and educational tool. Factor level estimates are population averages from published clinical trial data and are not personalized medical advice. Always follow guidance from your hemophilia treatment centre.
+VENA is a personal passion project and educational tool. Factor level estimates are population averages from published clinical trial data and are not personalized medical advice. Always follow guidance from your hemophilia treatment centre. Please do let me know if you have recommendations or any gernal medtech or tech advice! im open to learning! Thank you! 
